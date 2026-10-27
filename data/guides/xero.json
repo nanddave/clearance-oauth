@@ -8,7 +8,7 @@
     "managed": false,
     "guideUrl": "https://composio.dev/auth/xero"
   },
-  "summary": "Xero has no approval queue to wait on; what you pick is a paid tier by connection count (free up to 5). Check the developer terms before using the data with AI.",
+  "summary": "Xero charges by connection count (free up to 5); connections stay capped at your tier's maximum until you meet that tier's requirements, which aren't clearly published. Check the developer terms before using the data with AI.",
   "toggles": [
     {
       "id": "connections",
@@ -69,19 +69,21 @@
         "create_app"
       ],
       "requires": [
-        "payment_method"
+        "payment_method",
+        "tier_reqs"
       ],
       "blockers": [
         {
           "symptom": "Connections stop at the tier maximum",
-          "fix": "Move up a tier; connections are capped until you meet that tier's requirements."
+          "fix": "Meet the tier's requirements or move up a tier; Xero does not clearly publish the requirements."
         }
       ],
       "agentCan": "none",
       "claimIds": [
         "x_tiers",
         "x_cap",
-        "x_25"
+        "x_25",
+        "x_pay"
       ],
       "appliesWhen": {
         "connections": [
@@ -140,7 +142,30 @@
         "kind": "self"
       },
       "claimIds": [
-        "x_tiers"
+        "x_pay"
+      ],
+      "appliesWhen": {
+        "connections": [
+          "le50",
+          "le1000"
+        ]
+      }
+    },
+    {
+      "id": "tier_reqs",
+      "label": "Meet the tier's requirements (not clearly published)",
+      "howToGet": [],
+      "acquireDays": "unknown",
+      "acquireEffortHours": [
+        0,
+        0
+      ],
+      "dependsOn": [],
+      "check": {
+        "kind": "self"
+      },
+      "claimIds": [
+        "x_cap"
       ],
       "appliesWhen": {
         "connections": [
@@ -153,12 +178,24 @@
   "claims": [
     {
       "id": "x_tiers",
-      "text": "From 2 Mar 2026: Starter 5 connections free; Core 50 A$35/mo; Plus 1,000 A$245/mo; Advanced 10,000 A$1,445/mo; Enterprise by arrangement. A payment method is needed from Core.",
+      "text": "From 2 Mar 2026: Starter 5 connections free; Core 50 connections A$35; Plus 1,000 A$245; Advanced 10,000 A$1,445; Enterprise by arrangement.",
       "status": "official",
       "sources": [
         {
           "url": "https://developer.xero.com/pricing",
           "quote": "Starter 5 conns free · Core 50 A$35/mo · Plus 1,000 A$245 · Advanced 10,000 A$1,445 · Enterprise POA.",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "x_pay",
+      "text": "A payment method is needed from the Core tier.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://developer.xero.com/faq/pricing-and-policy-updates",
+          "quote": "Payment method from Core",
           "checkedAt": "2026-10-27"
         }
       ]
@@ -170,8 +207,9 @@
       "sources": [
         {
           "url": "https://developer.xero.com/faq/pricing-and-policy-updates",
-          "quote": "\"Connections are capped at the tier maximums until you meet that tier's requirements.\"",
-          "checkedAt": "2026-10-27"
+          "quote": "Connections are capped at the tier maximums until you meet that tier's requirements.",
+          "checkedAt": "2026-10-27",
+          "verbatim": true
         }
       ]
     },
@@ -182,8 +220,9 @@
       "sources": [
         {
           "url": "https://fivetran.com/docs/connectors/applications/xero",
-          "quote": "\"25 uncertified connections\" in Apideck/Fivetran docs",
-          "checkedAt": "2026-10-27"
+          "quote": "25 uncertified connections",
+          "checkedAt": "2026-10-27",
+          "verbatim": true
         },
         {
           "url": "https://developer.xero.com/pricing",
@@ -200,7 +239,7 @@
       "sources": [
         {
           "url": "https://www.theregister.com/2025/12/04/xero_api_fees_change/",
-          "quote": "ban using API data to train AI/ML models and bots that \"simulate user actions\"",
+          "quote": "New developer terms ban using API data to train AI/ML models and bots that \"simulate user actions\"",
           "checkedAt": "2026-10-27"
         }
       ],

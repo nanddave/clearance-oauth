@@ -96,7 +96,7 @@
         },
         {
           "symptom": "Wrong integration type chosen",
-          "fix": "It can't be changed once in review; withdraw and restart."
+          "fix": "The integration type can't change once in review, so choose carefully before submitting."
         }
       ],
       "agentCan": "none",
@@ -104,7 +104,8 @@
         "d_golive",
         "d_no20",
         "d_account",
-        "d_prodsecret"
+        "d_prodsecret",
+        "d_partner"
       ]
     },
     {
@@ -167,8 +168,9 @@
       "sources": [
         {
           "url": "https://developers.docusign.com/html/newsletter/202511.html",
-          "quote": "\"eliminates the requirement to make 20 API calls\" (newsletter Nov 3 2025)",
-          "checkedAt": "2026-10-27"
+          "quote": "eliminates the requirement to make 20 API calls",
+          "checkedAt": "2026-10-27",
+          "verbatim": true
         },
         {
           "url": "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623",
@@ -185,7 +187,13 @@
       "sources": [
         {
           "url": "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623",
-          "quote": "Reviews \"typically completed within 48 hours or less\".",
+          "quote": "typically completed within 48 hours or less",
+          "checkedAt": "2026-10-27",
+          "verbatim": true
+        },
+        {
+          "url": "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623",
+          "quote": "New flow: pick integration type + production account in Apps & Keys → Approved instantly / Needs review / Not allowed.",
           "checkedAt": "2026-10-27"
         }
       ]
@@ -196,7 +204,7 @@
       "status": "official",
       "sources": [
         {
-          "url": "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623",
+          "url": "https://developers.docusign.com/docs/esign-rest-api/go-live/",
           "quote": "Needs a paid production account with admin/developer access.",
           "checkedAt": "2026-10-27"
         }
@@ -204,10 +212,16 @@
     },
     {
       "id": "d_partner",
-      "text": "Public integrations need Partner Program membership; embedded needs a special license. No timeline found.",
-      "status": "unknown",
-      "sources": [],
-      "note": "Membership is required per DocuSign; its duration was not found."
+      "text": "Public integrations need Partner Program membership; embedded needs a special license; the integration type can't change once in review.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623",
+          "quote": "Public integrations need Partner Program membership; embedded needs a special license; integration type can't change once in review.",
+          "checkedAt": "2026-10-27"
+        }
+      ],
+      "note": "How long Partner Program membership takes was not found."
     },
     {
       "id": "d_prodsecret",

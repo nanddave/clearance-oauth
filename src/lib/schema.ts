@@ -20,7 +20,7 @@ export const AutoCheckRuleSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("support_email_on_domain") }),
 ]);
 
-export const SourceSchema = z.object({ url: z.string(), quote: z.string(), checkedAt: z.string() });
+export const SourceSchema = z.object({ url: z.string(), quote: z.string(), checkedAt: z.string(), verbatim: z.boolean().optional() });
 
 export const ClaimSchema = z.object({
   id: z.string(),

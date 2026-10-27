@@ -5,8 +5,7 @@
   "name": "GitHub",
   "website": "https://docs.github.com/en/apps",
   "composio": {
-    "managed": true,
-    "guideUrl": "https://composio.dev/auth/github"
+    "managed": true
   },
   "summary": "No review is needed to build and use a GitHub App; org owners may need to approve installs. Only a paid Marketplace listing has requirements.",
   "toggles": [
@@ -58,7 +57,7 @@
       "id": "listing",
       "title": "Paid Marketplace listing",
       "phase": "production",
-      "kind": "review",
+      "kind": "commercial",
       "owner": "provider",
       "effortHours": [
         2,

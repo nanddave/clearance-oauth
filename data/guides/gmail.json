@@ -65,7 +65,8 @@
       ],
       "agentCan": "draft",
       "claimIds": [
-        "g_cap"
+        "g_cap",
+        "g_exempt"
       ]
     },
     {
@@ -78,10 +79,7 @@
         1,
         2
       ],
-      "waitDays": [
-        2,
-        3
-      ],
+      "waitDays": "unknown",
       "dependsOn": [
         "create_project"
       ],
@@ -158,7 +156,7 @@
       ],
       "waitDays": [
         30,
-        60
+        30
       ],
       "dependsOn": [
         "brand",
@@ -172,7 +170,7 @@
       "blockers": [
         {
           "symptom": "Verification stalls while Google reviews",
-          "fix": "Start CASA and the demo video on day 1; Google states it might require several months."
+          "fix": "Start CASA and the demo video on day 1; Google says it might require several months, so 30 days is a floor."
         }
       ],
       "agentCan": "none",
@@ -205,7 +203,7 @@
       "blockers": [
         {
           "symptom": "Assessment cost is not published",
-          "fix": "Get quotes from an empanelled assessor; a vendor estimate is ~$3k–15k (reported)."
+          "fix": "Get quotes from an empanelled assessor."
         }
       ],
       "agentCan": "none",
@@ -303,6 +301,9 @@
       "appliesWhen": {
         "uses": [
           "read"
+        ],
+        "audience": [
+          "external"
         ]
       }
     },
@@ -339,8 +340,8 @@
       ],
       "acquireDays": "unknown",
       "acquireEffortHours": [
-        8,
-        40
+        0,
+        0
       ],
       "dependsOn": [],
       "check": {
@@ -353,6 +354,9 @@
       "appliesWhen": {
         "uses": [
           "read"
+        ],
+        "audience": [
+          "external"
         ]
       }
     },
@@ -392,34 +396,23 @@
     },
     {
       "id": "g_brand",
-      "text": "Brand verification takes 2–3 business days.",
-      "status": "official",
-      "sources": [
-        {
-          "url": "docs/research/2026-10-27-provider-facts.md",
-          "quote": "Brand verification 2–3 business days [O]",
-          "checkedAt": "2026-10-27"
-        }
-      ],
-      "note": "The research notes record this as official without a page URL; the source shown is those notes."
+      "text": "Reported 2–3 business days; source not captured.",
+      "status": "unknown",
+      "sources": [],
+      "note": "The research agent tagged this official but did not record which Google page."
     },
     {
       "id": "g_sensitive",
-      "text": "Sensitive scope verification: Google's pages disagree, 10 business days vs 3–5.",
-      "status": "conflicting",
+      "text": "Sensitive scope verification takes 10 business days.",
+      "status": "official",
       "sources": [
         {
           "url": "https://support.google.com/cloud/answer/13463817",
-          "quote": "10 business days (https://support.google.com/cloud/answer/13463817)",
-          "checkedAt": "2026-10-27"
-        },
-        {
-          "url": "docs/research/2026-10-27-provider-facts.md",
-          "quote": "3–5 (production-readiness page)",
+          "quote": "Sensitive verification: 10 business days (https://support.google.com/cloud/answer/13463817)",
           "checkedAt": "2026-10-27"
         }
       ],
-      "note": "Wait is modelled as the range 3–10 to cover both."
+      "note": "Another Google page reportedly says 3–5 business days (URL not captured)."
     },
     {
       "id": "g_restricted",
@@ -428,7 +421,7 @@
       "sources": [
         {
           "url": "https://support.google.com/cloud/answer/7454865",
-          "quote": "Restricted ≈6 weeks [O]; \"might require several months\"",
+          "quote": "Restricted ≈6 weeks; \"might require several months\"",
           "checkedAt": "2026-10-27"
         }
       ]
@@ -447,22 +440,45 @@
     },
     {
       "id": "g_casa_cost",
-      "text": "Google does not publish the CASA cost; a vendor estimate is ~$3k–15k.",
+      "text": "Google does not publish the CASA cost.",
       "status": "unknown",
       "sources": [],
-      "note": "The ~$3k–15k figure is a vendor estimate (reported), not shown as a number in the plan."
+      "note": "Vendor estimates exist, but no source URL was captured, so no number is shown."
     },
     {
       "id": "g_cap",
-      "text": "Unverified apps are limited to 100 new users for their lifetime, and the cap cannot be reset. Internal Workspace apps are exempt.",
+      "text": "Unverified apps are limited to 100 new users for their lifetime, and the cap cannot be reset.",
       "status": "official",
       "sources": [
         {
-          "url": "docs/research/2026-10-27-provider-facts.md",
-          "quote": "Unverified apps: 100 new users lifetime, cannot be reset. [O] Internal Workspace apps exempt. [O]",
+          "url": "https://support.google.com/cloud/answer/7454865",
+          "quote": "Unverified apps: 100 new users lifetime, cannot be reset.",
+          "checkedAt": "2026-10-27"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/13463817",
+          "quote": "Unverified apps: 100 new users lifetime, cannot be reset.",
           "checkedAt": "2026-10-27"
         }
       ]
+    },
+    {
+      "id": "g_exempt",
+      "text": "Internal Workspace apps, personal use and dev/test builds are exempt from verification.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/7454865",
+          "quote": "Internal Workspace apps, personal use and dev/test builds exempt from verification.",
+          "checkedAt": "2026-10-27"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/13463817",
+          "quote": "Internal Workspace apps, personal use and dev/test builds exempt from verification.",
+          "checkedAt": "2026-10-27"
+        }
+      ],
+      "note": "Summarised by the research agent; exact Google wording not captured."
     }
   ]
 }

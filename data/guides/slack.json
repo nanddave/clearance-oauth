@@ -5,8 +5,7 @@
   "name": "Slack",
   "website": "https://docs.slack.dev",
   "composio": {
-    "managed": true,
-    "guideUrl": "https://composio.dev/auth/slack"
+    "managed": true
   },
   "summary": "Listing in the Slack Marketplace needs 10 active installs first, then a review that can take up to about 12 weeks. Unlisted commercial apps are rate-limited to 1 history request a minute.",
   "toggles": [
@@ -16,7 +15,11 @@
       "options": [
         {
           "id": "internal",
-          "label": "Own workspace / not listed"
+          "label": "Own workspace only"
+        },
+        {
+          "id": "unlisted_commercial",
+          "label": "Unlisted commercial app"
         },
         {
           "id": "marketplace",
@@ -75,7 +78,7 @@
       ],
       "appliesWhen": {
         "distribution": [
-          "internal"
+          "unlisted_commercial"
         ]
       }
     },
@@ -185,7 +188,7 @@
       "sources": [
         {
           "url": "https://docs.slack.dev/changelog/2026/09/01/slack-marketplace-install-requirement",
-          "quote": "Marketplace requires **10** active-workspace installs since Jul 2026, maintained during review",
+          "quote": "Marketplace requires 10 active-workspace installs since Jul 2026, maintained during review",
           "checkedAt": "2026-10-27"
         }
       ],
@@ -205,7 +208,7 @@
     },
     {
       "id": "s_rate",
-      "text": "Non-Marketplace commercial apps get 1 request/minute on conversations.history and .replies, with limit max 15.",
+      "text": "Non-Marketplace commercial apps get 1 request/minute on conversations.history and .replies, with a per-request page size cap (limit max) of 15.",
       "status": "official",
       "sources": [
         {

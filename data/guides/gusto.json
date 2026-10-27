@@ -127,17 +127,29 @@
       "sources": [
         {
           "url": "https://docs.gusto.com/app-integrations/docs/introduction",
-          "quote": "\"Production access is gated, and not all applications are approved\" → Partner Checklist to developer@gusto.com → QA review → production keys.",
-          "checkedAt": "2026-10-27"
+          "quote": "Production access is gated, and not all applications are approved",
+          "checkedAt": "2026-10-27",
+          "verbatim": true
         }
       ]
     },
     {
       "id": "u_duration",
-      "text": "Gusto does not publish how long approval takes. Third-party reports of the security review differ (about 1 week vs 2–4 weeks).",
-      "status": "unknown",
-      "sources": [],
-      "note": "Reported by Merge (~1 week) and Finch (2–4 weeks); not official, so not used as a number."
+      "text": "Gusto does not publish approval durations; third-party reports of the security review differ: about 1 week (Merge) vs 2–4 weeks (Finch).",
+      "status": "conflicting",
+      "sources": [
+        {
+          "url": "https://help.merge.dev/en/articles/10354314-gusto-how-do-i-set-up-my-integration",
+          "quote": "security review ~1 week (Merge: https://help.merge.dev/en/articles/10354314-gusto-how-do-i-set-up-my-integration)",
+          "checkedAt": "2026-10-27"
+        },
+        {
+          "url": "https://developer.tryfinch.com/implementation-guide/Deploy/Security-Reviews",
+          "quote": "2–4 weeks (Finch: https://developer.tryfinch.com/implementation-guide/Deploy/Security-Reviews)",
+          "checkedAt": "2026-10-27"
+        }
+      ],
+      "note": "Third-party reports, not Gusto; the wait is modelled as unknown."
     }
   ]
 }

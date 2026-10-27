@@ -4,7 +4,9 @@ import { computePlan } from "./engine";
 import { getGuide, listGuides } from "./guides";
 import { parseSelection, toSearchParams } from "./selection";
 
-const facts = readFileSync("docs/research/2026-10-27-provider-facts.md", "utf8");
+// strip markdown bold and [X]-style tags so quotes can be clean summaries of the notes
+const norm = (x: string) => x.replace(/\*\*/g, "").replace(/\s*\[[^\]]*\]/g, "");
+const facts = norm(readFileSync("docs/research/2026-10-27-provider-facts.md", "utf8"));
 const sel = (slug: string, q = "") => {
   const g = getGuide(slug)!;
   return computePlan(g, parseSelection(g, new URLSearchParams(q)));
@@ -43,7 +45,8 @@ describe("showcase guides", () => {
         if (c.status === "conflicting") expect(c.sources.length).toBeGreaterThanOrEqual(2);
         for (const s of c.sources) {
           expect(s.checkedAt).toBe("2026-10-27");
-          expect(facts.includes(s.quote), `${g.slug}:${c.id} quote`).toBe(true);
+          expect(s.url, `${g.slug}:${c.id} url`).toMatch(/^https:\/\//);
+          expect(facts.includes(norm(s.quote)), `${g.slug}:${c.id} quote`).toBe(true);
         }
       }
   });
