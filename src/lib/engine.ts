@@ -1,6 +1,7 @@
 import type { Gate, Guide, Requirement } from "./schema";
 
-export type Selection = { toggles: Record<string, string>; have: Set<string>; done?: Set<string> }; // done: gate ids already passed
+// done: gate ids already passed; lane: use Composio's managed app or your own OAuth app
+export type Selection = { toggles: Record<string, string>; have: Set<string>; done?: Set<string>; lane?: "managed" | "own" };
 export type Clock = { min: number; max: number; unknown: boolean };
 export type Plan = {
   tier: "self-serve" | "review" | "gated" | "blocked";
@@ -8,6 +9,7 @@ export type Plan = {
   ideal: Clock;
   yours: Clock;
   topBlocker: Gate | null;
+  unknownWaits: Gate[]; // open gates with an unknown wait that are not the #1 blocker
   missing: Requirement[];
   order: { id: string; kind: "gate" | "requirement"; startDay1: boolean }[];
   gates: Gate[];
@@ -101,7 +103,10 @@ export function computePlan(guide: Guide, sel: Selection): Plan {
       ],
     );
   const reqNode = (q: Requirement) =>
-    node("r:" + q.id, q.acquireEffortHours, q.acquireDays, q.dependsOn.filter((d) => missingIds.has(d)).map((d) => "r:" + d));
+    node("r:" + q.id, q.acquireEffortHours, q.acquireDays, [
+      ...q.dependsOn.filter((d) => missingIds.has(d)).map((d) => "r:" + d),
+      ...(q.afterGates ?? []).filter((d) => gateIds.has(d)).map((d) => "g:" + d),
+    ]);
   const missingList = [...missingIds].map((id) => reqs.get(id)!);
 
   const devGates = gates.filter((x) => x.phase === "dev");
@@ -153,7 +158,8 @@ export function computePlan(guide: Guide, sel: Selection): Plan {
   }
 
   const doneIds = new Set(gates.filter(isDone).map((x) => x.id));
-  return { tier, dev, ideal, yours, topBlocker, missing: missingList, order: order.filter((o) => !(o.kind === "gate" && doneIds.has(o.id))), gates };
+  const unknownWaits = open.filter((x) => x.waitDays === "unknown" && x !== topBlocker);
+  return { tier, dev, ideal, yours, topBlocker, unknownWaits, missing: missingList, order: order.filter((o) => !(o.kind === "gate" && doneIds.has(o.id))), gates };
 }
 
 export function formatClock(c: Clock): string {

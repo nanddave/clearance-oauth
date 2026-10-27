@@ -29,16 +29,21 @@ const primary = "rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-wh
 
 function SlackKit() {
   const [name, setName] = useState("");
+  const [scopes, setScopes] = useState("chat:write");
   return (
     <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-3 text-sm">
       <label className="block text-zinc-800">
         Your app&apos;s name
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="My agent" className={input} />
       </label>
-      <a href={slackManifestUrl(name)} target="_blank" rel="noopener noreferrer" className={`mt-2 inline-block ${primary}`}>
+      <label className="mt-2 block text-zinc-800">
+        Bot scopes your tools need
+        <input value={scopes} onChange={(e) => setScopes(e.target.value)} placeholder="chat:write, channels:read" className={`${input} font-mono`} />
+      </label>
+      <a href={slackManifestUrl(name, scopes)} target="_blank" rel="noopener noreferrer" className={`mt-2 inline-block ${primary}`}>
         Create the Slack app, pre-filled →
       </a>
-      <p className="mt-2 text-xs text-zinc-600">Opens Slack with the bot scopes and Composio redirect already set. Pick your workspace and click Create.</p>
+      <p className="mt-2 text-xs text-zinc-600">Opens Slack with these scopes and the Composio redirect already set; you pick the workspace and click Create. Ask only for scopes you use: extra ones slow reviews.</p>
     </div>
   );
 }
@@ -69,7 +74,7 @@ function GithubKit() {
         Create the GitHub App, pre-filled →
       </button>
       <p className="mt-2 text-xs text-zinc-600">
-        GitHub shows the app with the Composio callback and minimal permissions; click Create. It sends you back here with this step marked done. We never receive your keys.
+        GitHub opens with the Composio callback and read-only metadata access; add the permissions your tools need there, then click Create. It sends you back here with this step marked done. We never receive your keys.
       </p>
     </form>
   );

@@ -72,6 +72,7 @@ export const RequirementSchema = z.object({
   ]),
   claimIds: z.array(z.string()),
   whatToAsk: z.string().optional(),
+  afterGates: z.array(z.string()).optional(), // gates that must finish first (e.g. installs need the app to exist)
 });
 
 export const GuideSchema = z.object({

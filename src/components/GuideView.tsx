@@ -6,7 +6,8 @@ import { computePlan, type Selection } from "@/lib/engine";
 import type { Guide } from "@/lib/schema";
 import { isStub, safeHref } from "@/lib/display";
 import { parseSelection, toSearchParams } from "@/lib/selection";
-import { answers, composioNote, nextAction } from "@/lib/next";
+import { answers, composioNote, managedAction, nextAction } from "@/lib/next";
+import { LaneChooser } from "./LaneChooser";
 import { ClaimList } from "./ClaimList";
 import { ErrorDecoder, KitList } from "./Kits";
 import { kitsFor } from "@/lib/kits";
@@ -54,6 +55,7 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
   const plan = computePlan(guide, sel);
   const relevant = computePlan(guide, { toggles: sel.toggles, have: new Set(), done: sel.done }).missing;
   const next = nextAction(guide, plan);
+  const managed = sel.lane === "managed";
   const stub = isStub(guide);
   const website = safeHref(guide.website);
 
@@ -80,6 +82,37 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
       return { ...s, done };
     });
 
+  const ownPlan = (
+    <>
+        <VerdictCard guide={guide} plan={plan} placeholder={stub} />
+        <StageTracker
+          steps={plan.gates.map((g) => ({ id: g.id, title: g.title, done: !!sel.done?.has(g.id), next: next?.kind === "gate" && next.id === g.id }))}
+          onToggle={setDone}
+        />
+        <NextActionCard
+          action={next}
+          kits={next ? kitsFor(guide, next.id) : []}
+          onDone={() => next && (next.kind === "gate" ? setDone(next.id, true) : setHave([next.id], true))}
+        />
+
+        <Section id="ready" title="Am I ready to submit?" hint="Tick what you already have; missing items are added to your plan.">
+          {relevant.length ? (
+            <ReadinessChecklist guide={guide} reqs={relevant} have={sel.have} onToggle={(id, on) => setHave([id], on)} onPass={(ids) => setHave(ids, true)} onFail={(ids) => setHave(ids, false)} />
+          ) : (
+            <p className="text-sm text-zinc-600">No prerequisites for this combination.</p>
+          )}
+        </Section>
+
+        <Section id="order" title="Fastest order" hint="Items marked start day 1 have long lead times — begin them in parallel.">
+          <FastestOrder guide={guide} plan={plan} />
+        </Section>
+
+        <Section id="path" title="Path">
+          <PathList guide={guide} plan={plan} renderKits={(id) => (kitsFor(guide, id).length ? <KitList kits={kitsFor(guide, id)} /> : null)} />
+        </Section>
+    </>
+  );
+
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-600">
@@ -97,6 +130,9 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
         <CopyLink />
       </div>
 
+      <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">{guide.name}</h1>
+      <p className="mt-1 max-w-3xl text-sm text-zinc-700">{guide.summary}</p>
+
       {guide.origin === "generated" && (
         <div role="note" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
           <p className="font-semibold">Agent-generated · not human-reviewed · checked {guide.updatedAt.slice(0, 10)}</p>
@@ -104,45 +140,33 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
         </div>
       )}
 
-      <VerdictCard guide={guide} plan={plan} placeholder={stub} note={composioNote(guide, sel)} />
-      <AnswersTable answers={answers(guide, plan)} />
-      <StageTracker
-        steps={plan.gates.map((g) => ({ id: g.id, title: g.title, done: !!sel.done?.has(g.id), next: next?.kind === "gate" && next.id === g.id }))}
-        onToggle={setDone}
-      />
-      <NextActionCard
-        action={next}
-        kits={next ? kitsFor(guide, next.id) : []}
-        onDone={() => next && (next.kind === "gate" ? setDone(next.id, true) : setHave([next.id], true))}
-      />
+      <LaneChooser guide={guide} plan={plan} lane={managed ? "managed" : "own"} note={composioNote(guide, sel)} placeholder={stub} onChange={(lane) => update((s) => ({ ...s, lane }))} />
 
       {guide.toggles.length > 0 && (
-        <Section id="toggles" title="What does your agent need?" hint="Change these and the verdict updates.">
+        <Section id="toggles" title="What does your agent need?" hint="Change these and both answers update.">
           <Toggles toggles={guide.toggles} value={sel.toggles} onChange={(id, opt) => update((s) => ({ ...s, toggles: { ...s.toggles, [id]: opt } }))} />
         </Section>
       )}
 
-      <Section id="ready" title="Am I ready to submit?" hint="Tick what you already have; missing items are added to Your plan.">
-        {relevant.length ? (
-          <ReadinessChecklist guide={guide} reqs={relevant} have={sel.have} onToggle={(id, on) => setHave([id], on)} onPass={(ids) => setHave(ids, true)} />
-        ) : (
-          <p className="text-sm text-zinc-600">No prerequisites for this combination.</p>
-        )}
-      </Section>
+      {managed ? (
+        <>
+          <NextActionCard action={managedAction(guide)} kits={kitsFor(guide, "managed_connect")} onDone={null} />
+          <details className="mt-8 rounded-xl border border-zinc-200 bg-white p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-zinc-900">Your own app plan: for your name on the consent screen, your own scopes or rate limits</summary>
+            <div className="mt-4">{ownPlan}</div>
+          </details>
+        </>
+      ) : (
+        ownPlan
+      )}
 
-      <Section id="order" title="Fastest order" hint="Items marked start day 1 have long lead times — begin them in parallel.">
-        <FastestOrder guide={guide} plan={plan} />
-        <p className="mt-3 text-xs text-zinc-500">
-          For agents: the same plan as JSON at{" "}
-          <a href={`/api/guides/${guide.slug}${toSearchParams(sel)}`} className="font-mono underline underline-offset-2">
-            /api/guides/{guide.slug}
-          </a>
-        </p>
-      </Section>
-
-      <Section id="path" title="Path">
-        <PathList guide={guide} plan={plan} renderKits={(id) => (kitsFor(guide, id).length ? <KitList kits={kitsFor(guide, id)} /> : null)} />
-      </Section>
+      <AnswersTable answers={answers(guide, plan, sel)} />
+      <p className="mt-2 text-xs text-zinc-500">
+        For agents: the same answer as JSON at{" "}
+        <a href={`/api/guides/${guide.slug}${toSearchParams(sel)}`} className="font-mono underline underline-offset-2">
+          /api/guides/{guide.slug}
+        </a>
+      </p>
 
       <Section id="errors" title="Got an error?" hint="We match it against known setup errors; nothing is guessed.">
         <ErrorDecoder slug={guide.slug} />

@@ -18,11 +18,12 @@ export function SearchBox({ library }: { library: { slug: string; name: string }
     setBusy(true);
     try {
       const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: q }) });
-      const data = await res.json();
-      if (!res.ok || !data.slug) throw new Error(data.error ?? "failed");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.slug) throw new Error(data.error ?? "Could not start research. Try again.");
       router.push(`/g/${data.slug}`);
-    } catch {
-      setErr("Could not start generation. Try again.");
+    } catch (e) {
+      // server errors (rate limit, daily budget) are written for people, so show them as they are
+      setErr(e instanceof Error && e.message !== "Failed to fetch" ? e.message : "Couldn't reach the server. Try again.");
       setBusy(false);
     }
   }

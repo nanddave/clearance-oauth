@@ -6,7 +6,7 @@ const checks = [
   ["corrections page", async () => (await page("/corrections")).length > 1000],
   ["agent JSON for Gmail send", async () => {
     const v = await json("/api/guides/gmail?t.uses=send&t.audience=external");
-    return v.version === 1 && v.verdict.tier === "review" && v.answers[2].answer === "unknown";
+    return v.version === 2 && v.verdict.tier === "review" && v.decision.connection === "unknown" && v.decision.lane === "managed";
   }],
   ["unknown guide is a 404 with a hint", async () => (await fetch(`${base}/api/guides/not-an-app-xyz`)).status === 404],
   ["site check refuses private addresses", async () => {

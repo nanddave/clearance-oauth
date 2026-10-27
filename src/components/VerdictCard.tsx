@@ -1,6 +1,6 @@
 import type { Plan } from "@/lib/engine";
 import type { Guide } from "@/lib/schema";
-import { TIER_LABEL, clockLabel, missingImpact, planDelta, safeHref, waitLabel, weakestStatus } from "@/lib/display";
+import { TIER_LABEL, clockLabel, missingImpact, planDelta, waitLabel, weakestStatus } from "@/lib/display";
 import { NumberSource } from "./EvidenceBadge";
 
 export const TIER_STYLE: Record<Plan["tier"], string> = {
@@ -16,30 +16,6 @@ const TIER_HINT: Record<Plan["tier"], string> = {
   gated: "Partner programme or a wait longer than 21 working days.",
   blocked: "Not available for your use case.",
 };
-
-// Composio verified that its own guide stops before provider approval only for these two.
-const STOPS_BEFORE_APPROVAL = new Set(["docusign", "xero"]);
-
-function Composio({ guide, note }: { guide: Guide; note: string | null }) {
-  const { managed, guideUrl } = guide.composio;
-  if (note) return <>{note}</>;
-  if (managed === true) return <>Composio manages this OAuth app — you can start today; you&apos;ll want your own app for production branding and limits.</>;
-  if (managed === "unknown") return <>Composio coverage unknown.</>;
-  const href = safeHref(guideUrl);
-  return (
-    <>
-      No Composio-managed app — you must register your own.
-      {href && (
-        <>
-          {" "}
-          <a href={href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-            {STOPS_BEFORE_APPROVAL.has(guide.slug) ? "Composio's setup guide (stops before approval)" : "Composio's setup guide"}
-          </a>
-        </>
-      )}
-    </>
-  );
-}
 
 function Num({ label, value, id, hint }: { label: string; value: string; id: string; hint: React.ReactNode }) {
   return (
@@ -66,14 +42,14 @@ function YoursHint({ guide, plan }: { guide: Guide; plan: Plan }) {
   );
 }
 
-export function VerdictCard({ guide, plan, placeholder, note = null }: { guide: Guide; plan: Plan; placeholder: boolean; note?: string | null }) {
+export function VerdictCard({ guide, plan, placeholder }: { guide: Guide; plan: Plan; placeholder: boolean }) {
   const b = plan.topBlocker;
   return (
     <section aria-labelledby="verdict" className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 id="verdict" className="text-2xl font-semibold tracking-tight text-zinc-950">
-          {guide.name}
-        </h1>
+        <h2 id="verdict" className="text-lg font-semibold tracking-tight text-zinc-950">
+          Your own {guide.name} app
+        </h2>
         <span
           data-tier={plan.tier}
           className={`rounded-full px-3 py-1 text-sm font-semibold ${placeholder ? "bg-zinc-200 text-zinc-600" : TIER_STYLE[plan.tier]}`}
@@ -83,7 +59,6 @@ export function VerdictCard({ guide, plan, placeholder, note = null }: { guide: 
         </span>
         {!placeholder && <span className="text-sm text-zinc-600">{TIER_HINT[plan.tier]}</span>}
       </div>
-      <p className="mt-2 max-w-3xl text-sm text-zinc-700">{guide.summary}</p>
 
       <dl className="mt-4 grid gap-3 sm:grid-cols-3">
         <Num id="dev" label="Dev access" value={clockLabel(plan.dev)} hint="until you can build and test" />
@@ -105,10 +80,13 @@ export function VerdictCard({ guide, plan, placeholder, note = null }: { guide: 
             "nothing — no provider wait in your path"
           )}
         </p>
-        <p>
-          <span className="font-medium">Composio: </span>
-          <Composio guide={guide} note={note} />
-        </p>
+        {plan.unknownWaits.length > 0 && (
+          <p>
+            <span className="font-medium">Also unknown: </span>
+            {plan.unknownWaits.map((g) => g.title).join(", ")}. Nobody publishes how long; see what to ask below.
+          </p>
+        )}
+
       </div>
     </section>
   );

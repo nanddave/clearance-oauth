@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { computePlan } from "./engine";
 import { getGuide, listGuides } from "./guides";
 import { parseSelection, toSearchParams } from "./selection";
+import { validateGuide } from "./validate";
 
 // strip markdown bold and [X]-style tags so quotes can be clean summaries of the notes
 const norm = (x: string) => x.replace(/\*\*/g, "").replace(/\s*\[[^\]]*\]/g, "");
@@ -44,7 +45,7 @@ describe("showcase guides", () => {
         if (c.status !== "unknown") expect(c.sources.length, `${g.slug}:${c.id}`).toBeGreaterThan(0);
         if (c.status === "conflicting") expect(c.sources.length).toBeGreaterThanOrEqual(2);
         for (const s of c.sources) {
-          expect(s.checkedAt).toBe("2026-10-27");
+          expect(["2026-10-27", "2026-10-28"]).toContain(s.checkedAt);
           expect(s.url, `${g.slug}:${c.id} url`).toMatch(/^https:\/\//);
           expect(facts.includes(norm(s.quote)), `${g.slug}:${c.id} quote`).toBe(true);
         }
@@ -66,7 +67,8 @@ describe("showcase guides", () => {
 
   it("other tiers", () => {
     expect(sel("gusto").tier).toBe("gated");
-    expect(sel("slack").tier).toBe("gated");
+    expect(sel("slack").tier).toBe("self-serve"); // unlisted by default
+    expect(sel("slack", "t.distribution=marketplace").tier).toBe("gated");
     expect(sel("github").tier).toBe("self-serve");
     expect(sel("xero").tier).toBe("self-serve");
   });
@@ -106,5 +108,11 @@ describe("next-action data", () => {
       for (const r of g.requirements)
         if (r.acquireDays === "unknown") expect(r.whatToAsk, `${g.slug}:${r.id} whatToAsk`).toBeTruthy();
     }
+  });
+});
+
+describe("every reviewed guide is usable in every combination", () => {
+  it("has valid references, no cycles, and a possible order", () => {
+    for (const g of listGuides()) expect(validateGuide(g), g.slug).toEqual([]);
   });
 });

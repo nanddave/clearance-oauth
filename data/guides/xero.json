@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-27",
+  "updatedAt": "2026-10-28",
   "origin": "reviewed",
   "slug": "xero",
   "name": "Xero",
@@ -8,7 +8,7 @@
     "managed": false,
     "guideUrl": "https://composio.dev/auth/xero"
   },
-  "summary": "Xero charges by connection count (free up to 5); connections stay capped at your tier's maximum until you meet that tier's requirements, which aren't clearly published. Check the developer terms before using the data with AI.",
+  "summary": "Xero charges by connections: free up to 5, Core (50) needs a payment method, Plus (1,000) adds App Certification, Advanced (10,000) adds a security assessment. Data from Xero's APIs may not be used to train AI/ML models.",
   "toggles": [
     {
       "id": "connections",
@@ -54,7 +54,7 @@
     },
     {
       "id": "subscribe",
-      "title": "Subscribe to the Core or Plus tier",
+      "title": "Subscribe to the plan that covers your connections",
       "phase": "production",
       "kind": "commercial",
       "owner": "you",
@@ -71,20 +71,21 @@
       ],
       "requires": [
         "payment_method",
-        "tier_reqs"
+        "certification"
       ],
       "blockers": [
         {
-          "symptom": "Connections stop at the tier maximum",
-          "fix": "Meet the tier's requirements or move up a tier; Xero does not clearly publish the requirements."
+          "symptom": "Connections stop at the plan maximum",
+          "fix": "Move up a plan and meet its prerequisites: payment method from Core, App Certification from Plus, security assessment from Advanced."
         }
       ],
       "agentCan": "none",
       "claimIds": [
         "x_tiers",
         "x_cap",
-        "x_25",
-        "x_pay"
+        "x_prereq",
+        "x_pay",
+        "x_25"
       ],
       "appliesWhen": {
         "connections": [
@@ -92,11 +93,11 @@
           "le1000"
         ]
       },
-      "nextStep": "Add a payment method and subscribe to the tier that covers your expected connections."
+      "nextStep": "Add a payment method in the Xero developer portal and choose the plan that covers your expected connections (Core up to 50, Plus up to 1,000)."
     },
     {
       "id": "terms",
-      "title": "Accept the developer terms (no AI training, no bots simulating users)",
+      "title": "Accept the developer terms (no training AI/ML models on Xero data)",
       "phase": "production",
       "kind": "legal",
       "owner": "you",
@@ -114,15 +115,15 @@
       "requires": [],
       "blockers": [
         {
-          "symptom": "Your use case trains AI/ML models on API data or simulates user actions",
-          "fix": "That use is banned by the new terms; redesign it or ask Xero."
+          "symptom": "Your product trains AI/ML models on data from Xero's APIs",
+          "fix": "Not allowed. Keep Xero data out of any training set; an agent acting through the API is a separate question to confirm in the terms."
         }
       ],
       "agentCan": "none",
       "claimIds": [
         "x_terms"
       ],
-      "nextStep": "Read the developer terms with whoever owns legal; confirm your agent does not train on Xero data or simulate users."
+      "nextStep": "Read Xero's developer terms (developer.xero.com/xero-developer-platform-terms-conditions) with whoever owns legal. Xero publishes an AI toolkit, so agents acting through the API are an intended use; confirm no clause limits yours, and never train models on Xero data."
     }
   ],
   "requirements": [
@@ -155,30 +156,29 @@
       }
     },
     {
-      "id": "tier_reqs",
-      "label": "Meet the tier's requirements (not clearly published)",
+      "id": "certification",
+      "label": "Xero App Certification",
+      "appliesWhen": {
+        "connections": [
+          "le1000"
+        ]
+      },
       "howToGet": [
-        "Ask Xero developer support what your tier requires before you pass its connection cap."
+        "Xero lists App Certification as a prerequisite from the Plus plan; start it from the Xero developer portal before you pass 50 connections."
       ],
       "acquireDays": "unknown",
       "acquireEffortHours": [
-        0,
-        0
+        2,
+        8
       ],
       "dependsOn": [],
       "check": {
         "kind": "self"
       },
       "claimIds": [
-        "x_cap"
+        "x_prereq"
       ],
-      "appliesWhen": {
-        "connections": [
-          "le50",
-          "le1000"
-        ]
-      },
-      "whatToAsk": "Ask Xero developer support: \"What exactly must my app meet to go beyond the Starter tier's connection cap?\""
+      "whatToAsk": "Ask Xero developer support: \"How long does App Certification take today, and what does it check?\""
     }
   ],
   "claims": [
@@ -240,16 +240,29 @@
     },
     {
       "id": "x_terms",
-      "text": "New developer terms ban using API data to train AI/ML models and bots that simulate user actions.",
-      "status": "reported",
+      "text": "Data obtained from Xero's APIs may not be used to train AI/ML models.",
+      "status": "official",
       "sources": [
         {
-          "url": "https://www.theregister.com/2025/12/04/xero_api_fees_change/",
-          "quote": "New developer terms ban using API data to train AI/ML models and bots that \"simulate user actions\"",
-          "checkedAt": "2026-10-27"
+          "url": "https://developer.xero.com/pricing",
+          "quote": "data obtained from Xero’s APIs may not be used to train AI/ML models",
+          "checkedAt": "2026-10-28",
+          "verbatim": true
         }
-      ],
-      "note": "Press report; read the terms themselves."
+      ]
+    },
+    {
+      "id": "x_prereq",
+      "text": "Plan prerequisites: payment method from Core; App Certification from Plus; security assessment (initial and annual) from Advanced.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://developer.xero.com/pricing",
+          "quote": "Security Assessment (initial and annual)",
+          "checkedAt": "2026-10-28",
+          "verbatim": true
+        }
+      ]
     }
   ]
 }

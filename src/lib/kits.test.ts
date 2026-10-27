@@ -26,3 +26,22 @@ describe("kits", () => {
     expect(kitsFor(getGuide("xero")!, "terms")).toEqual([]);
   });
 });
+
+describe("setup scripts", () => {
+  it("own-app script sets the redirect URI it tells you to register, and checks a tool", () => {
+    const k = kitsFor(getGuide("docusign")!, "integration_key").find((x) => x.kind === "copy" && x.text.includes("use_custom_auth"));
+    expect(k && k.kind === "copy" && k.text).toContain(`oauth_redirect_uri: "${COMPOSIO_REDIRECT}"`);
+    expect(k && k.kind === "copy" && k.text).toContain("tools.execute");
+  });
+
+  it("managed lane gets a managed-auth script", () => {
+    const [k] = kitsFor(getGuide("gmail")!, "managed_connect");
+    expect(k.kind === "copy" && k.text).toContain('type: "use_composio_managed_auth"');
+    expect(k.kind === "copy" && k.text).toContain("GMAIL_GET_PROFILE");
+  });
+
+  it("Slack link uses the scopes you typed", () => {
+    const m = JSON.parse(new URL(slackManifestUrl("x", "chat:write, users:read")).searchParams.get("manifest_json")!);
+    expect(m.oauth_config.scopes.bot).toEqual(["chat:write", "users:read"]);
+  });
+});

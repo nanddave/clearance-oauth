@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-27",
+  "updatedAt": "2026-10-28",
   "origin": "reviewed",
   "slug": "slack",
   "name": "Slack",
@@ -33,7 +33,7 @@
       }
     ]
   },
-  "summary": "Listing in the Slack Marketplace needs 10 active installs first, then a review that can take up to about 12 weeks. Unlisted commercial apps are rate-limited to 1 history request a minute.",
+  "summary": "Most apps can ship unlisted: any workspace installs from your own link, but non-Marketplace commercial apps get 1 conversations.history request a minute. Listing in the Marketplace needs 10 active installs, then a review of up to about 12 weeks.",
   "toggles": [
     {
       "id": "distribution",
@@ -52,7 +52,7 @@
           "label": "Slack Marketplace"
         }
       ],
-      "default": "marketplace"
+      "default": "unlisted_commercial"
     }
   ],
   "gates": [
@@ -208,7 +208,10 @@
           "marketplace"
         ]
       },
-      "whatToAsk": "Ask yourself: which 10 workspaces (customers, design partners, friends) will install and keep the app active during review?"
+      "whatToAsk": "Ask yourself: which 10 workspaces (customers, design partners, friends) will install and keep the app active during review?",
+      "afterGates": [
+        "create_app"
+      ]
     }
   ],
   "claims": [

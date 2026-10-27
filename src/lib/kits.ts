@@ -8,13 +8,14 @@ export type Kit =
   | { kind: "github-manifest" }
   | { kind: "copy"; label: string; text: string; note?: string };
 
-/** Slack's documented pre-fill link: opens app creation with scopes and the Composio redirect already set. */
-export function slackManifestUrl(appName: string): string {
+/** Slack's documented pre-fill link: opens app creation with the bot scopes and the Composio redirect already set. */
+export function slackManifestUrl(appName: string, scopes = "chat:write"): string {
   const name = appName.trim().slice(0, 35) || "My agent";
+  const bot = scopes.split(/[\s,]+/).map((x) => x.trim()).filter(Boolean);
   const manifest = {
     display_information: { name },
     features: { bot_user: { display_name: name, always_online: false } },
-    oauth_config: { redirect_urls: [COMPOSIO_REDIRECT], scopes: { bot: ["channels:history", "channels:read", "chat:write"] } },
+    oauth_config: { redirect_urls: [COMPOSIO_REDIRECT], scopes: { bot: bot.length ? bot : ["chat:write"] } },
   };
   return `https://api.slack.com/apps?new_app=1&manifest_json=${encodeURIComponent(JSON.stringify(manifest))}`;
 }
@@ -27,8 +28,29 @@ export function githubManifest(appName: string, homepage: string, returnUrl: str
     redirect_url: returnUrl,
     callback_urls: [COMPOSIO_REDIRECT],
     public: false,
-    default_permissions: { metadata: "read", contents: "read", issues: "write" },
+    default_permissions: { metadata: "read" }, // the minimum; add what your tools need on GitHub's page before creating
   });
+}
+
+// A read-only tool to prove the connection works. Names we're fairly sure of; otherwise the developer picks one.
+const TEST_TOOL: Record<string, string> = { gmail: "GMAIL_GET_PROFILE", github: "GITHUB_GET_THE_AUTHENTICATED_USER" };
+
+function connectAndCheck(guide: Guide): string {
+  const tool = TEST_TOOL[guide.slug];
+  return `const request = await composio.connectedAccounts.link("test-user", authConfig.id);
+console.log("Open this link and approve:", request.redirectUrl);
+const account = await request.waitForConnection(120_000);
+console.log("Connection:", account.status); // ACTIVE = this user can connect
+
+// Connection check: ACTIVE doesn't prove a tool works, so run one read-only tool.
+// ${tool ? `${tool} is our best guess; check the exact name in Composio's ${guide.name} tool list.` : `Pick a read-only GET or LIST tool from Composio's ${guide.name} tool list.`}
+const result = await composio.tools.execute(process.env.TEST_TOOL ?? "${tool ?? "REPLACE_WITH_A_READ_ONLY_TOOL"}", {
+  userId: "test-user",
+  arguments: {},
+  dangerouslySkipVersionCheck: true,
+});
+console.log("Tool check:", result.successful ? "OK" : \`failed: \${result.error}\`); // prints no account data
+`;
 }
 
 export function setupScript(guide: Guide): string {
@@ -46,15 +68,28 @@ const authConfig = await composio.authConfigs.create("${guide.slug}", {
   credentials: {
     client_id: process.env.${env}_CLIENT_ID!,
     client_secret: process.env.${env}_CLIENT_SECRET!,
+    // set explicitly: some toolkits default to an older callback if this is left out
+    oauth_redirect_uri: "${COMPOSIO_REDIRECT}",
   },
 });
 console.log("Auth config:", authConfig.id);
 
-const request = await composio.connectedAccounts.link("test-user", authConfig.id);
-console.log("Open this link and approve:", request.redirectUrl);
-const account = await request.waitForConnection(120_000);
-console.log("Connected:", account.id, account.status); // ACTIVE = this user can connect
-`;
+${connectAndCheck(guide)}`;
+}
+
+export function managedScript(guide: Guide): string {
+  return `// connect-managed.ts: run on your machine with \`npx tsx connect-managed.ts\`
+// needs: npm i @composio/core, and COMPOSIO_API_KEY in your env
+import { Composio } from "@composio/core";
+
+const composio = new Composio();
+const authConfig = await composio.authConfigs.create("${guide.slug}", {
+  type: "use_composio_managed_auth",
+  name: "${guide.name} (Composio app)",
+});
+console.log("Auth config:", authConfig.id);
+
+${connectAndCheck(guide)}`;
 }
 
 // The step after which the developer has a client ID and secret to give Composio.
@@ -103,6 +138,15 @@ const COPY: Record<string, Kit[]> = {
 
 /** What we can do or prepare for one step (gate or requirement id). Empty means only the written step. */
 export function kitsFor(guide: Guide, id: string): Kit[] {
+  if (id === "managed_connect")
+    return [
+      {
+        kind: "copy",
+        label: "Connect and check it works (run on your machine)",
+        text: managedScript(guide),
+        note: "Uses your Composio key from your own environment; nothing is sent to us. Paste the last two lines it prints into “Got an error?” if something fails.",
+      },
+    ];
   const kits = [...(COPY[`${guide.slug}:${id}`] ?? [])];
   if (guide.slug === "slack" && id === "create_app") kits.unshift({ kind: "slack-manifest" });
   if (guide.slug === "github" && id === "create_app") kits.unshift({ kind: "github-manifest" });
@@ -112,7 +156,7 @@ export function kitsFor(guide: Guide, id: string): Kit[] {
       kind: "copy",
       label: "Connect it to Composio (run on your machine)",
       text: setupScript(guide),
-      note: `Register ${COMPOSIO_REDIRECT} as the redirect URI first. Your secrets stay on your machine; we never see them.`,
+      note: `Register ${COMPOSIO_REDIRECT} as the redirect URI in the provider's app first, and confirm it matches the callback Composio shows for your auth config. Your secrets stay on your machine.`,
     });
   return kits;
 }

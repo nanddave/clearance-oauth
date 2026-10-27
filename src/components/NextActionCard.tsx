@@ -4,12 +4,12 @@ import { KitList } from "./Kits";
 import { Day1Chip } from "./PathList";
 
 const WHO: Record<Who, { label: string; style: string }> = {
-  do: { label: "🤖 An agent can do this", style: "bg-emerald-50 text-emerald-900 ring-emerald-600/30" },
-  draft: { label: "🪄 An agent can prepare this", style: "bg-sky-50 text-sky-900 ring-sky-600/30" },
+  do: { label: "🤖 Pre-filled for you: you confirm", style: "bg-emerald-50 text-emerald-900 ring-emerald-600/30" },
+  draft: { label: "🪄 Prepared for you", style: "bg-sky-50 text-sky-900 ring-sky-600/30" },
   you: { label: "🙋 Only you can do this", style: "bg-zinc-100 text-zinc-800 ring-zinc-400/40" },
 };
 
-export function NextActionCard({ action, kits, onDone }: { action: NextAction | null; kits: Kit[]; onDone: () => void }) {
+export function NextActionCard({ action, kits, onDone }: { action: NextAction | null; kits: Kit[]; onDone: (() => void) | null }) {
   if (!action)
     return (
       <section aria-labelledby="next" className="mt-4 rounded-xl border-2 border-emerald-700 bg-emerald-50 p-5">
@@ -42,9 +42,11 @@ export function NextActionCard({ action, kits, onDone }: { action: NextAction | 
       )}
       <KitList kits={kits} />
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <button type="button" onClick={onDone} className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700">
-          {action.kind === "gate" ? "Mark done" : "I have this"}
-        </button>
+        {onDone && (
+          <button type="button" onClick={onDone} className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700">
+            {action.kind === "gate" ? "Mark done" : "I have this"}
+          </button>
+        )}
         {action.then.length > 0 && <p className="text-xs text-zinc-500">After that: {action.then.join(" → ")}</p>}
       </div>
     </section>

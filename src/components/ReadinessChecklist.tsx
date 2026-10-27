@@ -14,9 +14,10 @@ type Props = {
   have: Set<string>;
   onToggle: (id: string, on: boolean) => void;
   onPass: (ids: string[]) => void;
+  onFail: (ids: string[]) => void; // un-ticks items an earlier check passed but this one didn't
 };
 
-export function ReadinessChecklist({ guide, reqs, have, onToggle, onPass }: Props) {
+export function ReadinessChecklist({ guide, reqs, have, onToggle, onPass, onFail }: Props) {
   const [homepage, setHomepage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -37,8 +38,10 @@ export function ReadinessChecklist({ guide, reqs, have, onToggle, onPass }: Prop
       if (!res.ok) throw new Error(body.error ?? `Check failed (${res.status})`);
       const shown = new Set(reqs.map((r) => r.id));
       const list = (body as CheckResult[]).filter((r) => shown.has(r.reqId));
+      const prevPassed = Object.values(results).filter((r) => r.status === "pass").map((r) => r.reqId);
       setResults(Object.fromEntries(list.map((r) => [r.reqId, r])));
       onPass(list.filter((r) => r.status === "pass").map((r) => r.reqId));
+      onFail(prevPassed.filter((id) => !list.some((r) => r.reqId === id && r.status === "pass")));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Check failed");
     } finally {

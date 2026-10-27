@@ -21,7 +21,8 @@ Labels: **[O]** official page fetched · **[R]** third-party/forum · **[C]** so
 - Security assessment + use-case approval for Journals / Practice Manager / Bulk Connections (Advanced+). [O]
 - [C] "25 uncertified connections" in Apideck/Fivetran docs — not in Xero's 2026 pages; treat as pre-Mar-2026. https://fivetran.com/docs/connectors/applications/xero
 - [C] Certification beta-customer count: 10 (devblog title) vs 3 (older PDF).
-- New developer terms ban using API data to train AI/ML models and bots that "simulate user actions" (from 4 Dec 2025 new devs / 2 Mar 2026 existing). [R] https://www.theregister.com/2025/12/04/xero_api_fees_change/
+- "data obtained from Xero’s APIs may not be used to train AI/ML models" (terms effective 4 Dec 2025 new devs / 2 Mar 2026 existing). [O] https://developer.xero.com/pricing (checked 2026-10-28). The Register's "bots that simulate user actions" summary is [R] and not on Xero's page; Xero also publishes an AI toolkit (Agentic SDKs, remote MCP server), so agents acting through the API are an intended use.
+- Plan prerequisites table (checked 2026-10-28): payment method from Core; App Certification from Plus; Security Assessment (initial and annual) from Advanced; Xero App Store required at Enterprise. [O] https://developer.xero.com/pricing
 
 ## Google (Gmail)
 - `gmail.send` = Sensitive; `gmail.readonly`, `gmail.modify`, `gmail.compose`, `gmail.metadata`, `mail.google.com/` = Restricted. [O] https://developers.google.com/workspace/gmail/api/auth/scopes
@@ -35,6 +36,8 @@ Labels: **[O]** official page fetched · **[R]** third-party/forum · **[C]** so
 - Marketplace requires **10** active-workspace installs since Jul 2026, maintained during review (changelog Sep 1 2026). [O] https://docs.slack.dev/changelog/2026/09/01/slack-marketplace-install-requirement . "5" is stale [C].
 - Preliminary review ≤10 business days; functional ≤10 weeks (new), ≤6 weeks (updates); no expedite; resubmitting during preliminary resets queue. Heavier review for `search:read`, `admin.*`, `identity.*`, legacy scopes. [O] https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide
 - Non-Marketplace commercial apps: `conversations.history`/`.replies` → 1 req/min, limit max 15 (May 29 2025). [O] https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps . [C] whether existing installs are affected. The `conversations.history` method reference page still shows only Tier 3 (50+ per minute). [O] https://docs.slack.dev/reference/methods/conversations.history
+
+- Unlisted distribution: a non-Marketplace app can be installed by any workspace via its own authorization link; Marketplace listing is optional (audit 2026-10-28 citing https://docs.slack.dev/faq/). [O-u, not re-fetched]
 
 ## GitHub
 - GitHub Apps recommended over OAuth Apps (fine-grained, 1-hour tokens). No review to create/use outside Marketplace; org owners may need to approve. [O] https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/differences-between-github-apps-and-oauth-apps

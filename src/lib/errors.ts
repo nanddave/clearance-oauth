@@ -28,8 +28,8 @@ export const KNOWN_ERRORS: KnownError[] = [
     id: "google_token_expired",
     apps: ["gmail"],
     match: /invalid_grant|token has been expired or revoked/i,
-    meaning: "The refresh token stopped working. In Testing mode Google expires refresh tokens after 7 days.",
-    fix: "Reconnect the account. For tokens that last, move the app to In production (and verify if your scopes need it).",
+    meaning: "Google no longer accepts this token or code. Common causes: the user revoked access, the password changed, a Testing-mode app's 7-day refresh-token expiry, too many tokens for one user, or an auth code reused or expired.",
+    fix: "Reconnect the account first. If it keeps happening every week, your app is probably in Testing: move it to In production (verifying if your scopes need it).",
   },
   {
     id: "invalid_client",
