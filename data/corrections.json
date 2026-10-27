@@ -1,0 +1,57 @@
+{
+  "entries": [
+    {
+      "app": "DocuSign",
+      "oldClaim": "You must make 20 successful API calls in the demo environment before Go-Live.",
+      "currentFact": "DocuSign eliminated the 20-API-call requirement in its streamlined Go-Live experience. Older threads and integrator docs still cite it.",
+      "sources": [
+        "https://developers.docusign.com/html/newsletter/202511.html",
+        "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623"
+      ],
+      "changedOn": "Announced Oct 3 2025 (community); newsletter Nov 3 2025",
+      "status": "official"
+    },
+    {
+      "app": "Slack",
+      "oldClaim": "A Marketplace listing needs 5 active workspace installs.",
+      "currentFact": "The requirement is 10 active-workspace installs since July 2026, and it must be maintained during review.",
+      "sources": ["https://docs.slack.dev/changelog/2026/09/01/slack-marketplace-install-requirement"],
+      "changedOn": "Jul 2026 (changelog dated Sep 1 2026)",
+      "status": "official"
+    },
+    {
+      "app": "Xero",
+      "oldClaim": "Apps can have 25 uncertified connections.",
+      "currentFact": "Superseded per Xero's own 2026 pages, which describe connection tiers from 2 Mar 2026 (Starter 5, Core 50, Plus 1,000, Advanced 10,000, Enterprise). Third-party docs still say 25. We did not find an official statement retiring the 25 figure, so the sources conflict.",
+      "sources": [
+        "https://developer.xero.com/pricing",
+        "https://developer.xero.com/faq/pricing-and-policy-updates",
+        "https://fivetran.com/docs/connectors/applications/xero"
+      ],
+      "changedOn": "2 Mar 2026 (tiers)",
+      "status": "conflicting"
+    },
+    {
+      "app": "Google (Gmail)",
+      "oldClaim": "Sensitive-scope verification takes 3-5 business days.",
+      "currentFact": "Google's verification page says 10 business days, and Clearance uses 10. The page giving 3-5 was not captured, so the two Google sources conflict.",
+      "sources": ["https://support.google.com/cloud/answer/13463817"],
+      "status": "conflicting"
+    },
+    {
+      "app": "Slack",
+      "oldClaim": "Non-Marketplace commercial apps get normal conversations.history rate limits.",
+      "currentFact": "Since May 29 2025, non-Marketplace commercial apps are limited to 1 request per minute on conversations.history and conversations.replies, with a maximum page size of 15. Whether already-installed apps are affected is conflicting.",
+      "sources": ["https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps"],
+      "changedOn": "May 29 2025",
+      "status": "conflicting"
+    }
+  ],
+  "unverified": [
+    "DocuSign's Go-Live page body (rendered by JavaScript, not captured)",
+    "Xero's developer blog (returned 403)",
+    "Gusto's FAQ (returned 403)",
+    "Gusto approval durations: the security review is about 1 week per Merge and 2-4 weeks per Finch; Gusto publishes no figure",
+    "Developer-setup steps for Google, Slack and DocuSign come from prior knowledge, not captured pages"
+  ]
+}

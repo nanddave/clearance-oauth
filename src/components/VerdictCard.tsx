@@ -3,7 +3,7 @@ import type { Guide } from "@/lib/schema";
 import { TIER_LABEL, clockLabel, missingImpact, planDelta, safeHref, waitLabel, weakestStatus } from "@/lib/display";
 import { NumberSource } from "./EvidenceBadge";
 
-const TIER_STYLE: Record<Plan["tier"], string> = {
+export const TIER_STYLE: Record<Plan["tier"], string> = {
   "self-serve": "bg-emerald-700 text-white",
   review: "bg-amber-400 text-amber-950",
   gated: "bg-orange-700 text-white",
