@@ -115,7 +115,7 @@
         6
       ],
       "waitDays": [
-        3,
+        10,
         10
       ],
       "dependsOn": [
@@ -421,8 +421,14 @@
       "sources": [
         {
           "url": "https://support.google.com/cloud/answer/7454865",
-          "quote": "Restricted ≈6 weeks; \"might require several months\"",
+          "quote": "Restricted ≈6 weeks",
           "checkedAt": "2026-10-27"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/7454865",
+          "quote": "might require several months",
+          "checkedAt": "2026-10-27",
+          "verbatim": true
         }
       ]
     },
