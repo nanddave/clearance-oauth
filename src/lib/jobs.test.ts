@@ -2,6 +2,15 @@ import { describe, expect, it } from "vitest";
 import { getJob, isReusable, startJob } from "./jobs";
 import { makeStubs } from "../agents/stubs";
 
+describe("jobs map bound", () => {
+  it("evicts the oldest job past 500", async () => {
+    const stubs = makeStubs(async () => {});
+    for (let i = 0; i < 502; i++) await startJob(`bound-${i}`, `bound-${i}`, stubs);
+    expect(getJob("bound-0")).toBeUndefined();
+    expect(getJob("bound-501")).toBeDefined();
+  });
+});
+
 describe("job reuse on retry", () => {
   it("reuses running jobs and jobs with a guide, replaces failed or guide-less ones", () => {
     expect(isReusable(undefined)).toBe(false);

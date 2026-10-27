@@ -22,7 +22,7 @@
     {
       "app": "Xero",
       "oldClaim": "Apps can have 25 uncertified connections.",
-      "currentFact": "Superseded per Xero's own 2026 pages, which describe connection tiers from 2 Mar 2026 (Starter 5, Core 50, Plus 1,000, Advanced 10,000, Enterprise). Third-party docs still say 25. We did not find an official statement retiring the 25 figure, so the sources conflict.",
+      "currentFact": "Xero's 2026 pricing pages list connection tiers (5/50/1,000/10,000) and do not mention 25; third-party docs still cite 25.",
       "sources": [
         "https://developer.xero.com/pricing",
         "https://developer.xero.com/faq/pricing-and-policy-updates",
@@ -34,17 +34,17 @@
     {
       "app": "Google (Gmail)",
       "oldClaim": "Sensitive-scope verification takes 3-5 business days.",
-      "currentFact": "Google's verification page says 10 business days, and Clearance uses 10. The page giving 3-5 was not captured, so the two Google sources conflict.",
+      "currentFact": "Google's FAQ says 10 business days; another Google page reportedly says 3–5 but we did not capture its URL. Clearance uses 10.",
       "sources": ["https://support.google.com/cloud/answer/13463817"],
-      "status": "conflicting"
+      "status": "official"
     },
     {
       "app": "Slack",
-      "oldClaim": "Non-Marketplace commercial apps get normal conversations.history rate limits.",
-      "currentFact": "Since May 29 2025, non-Marketplace commercial apps are limited to 1 request per minute on conversations.history and conversations.replies, with a maximum page size of 15. Whether already-installed apps are affected is conflicting.",
+      "oldClaim": "Unlisted apps get the same Tier 3 limits as Marketplace apps (still shown on the method's reference page).",
+      "currentFact": "Since May 29 2025, non-Marketplace commercial apps are limited to 1 request per minute on conversations.history and conversations.replies, with a maximum page size of 15. Whether existing installs are affected is disputed.",
       "sources": ["https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps"],
       "changedOn": "May 29 2025",
-      "status": "conflicting"
+      "status": "official"
     }
   ],
   "unverified": [
@@ -52,6 +52,8 @@
     "Xero's developer blog (returned 403)",
     "Gusto's FAQ (returned 403)",
     "Gusto approval durations: the security review is about 1 week per Merge and 2-4 weeks per Finch; Gusto publishes no figure",
-    "Developer-setup steps for Google, Slack and DocuSign come from prior knowledge, not captured pages"
+    "Developer-setup steps for Google, Slack and DocuSign come from prior knowledge, not captured pages",
+    "Google brand verification '2–3 business days' (source URL not captured)",
+    "Google testing-mode refresh tokens expiring after 7 days (from prior knowledge, not fetched)"
   ]
 }

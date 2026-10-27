@@ -82,7 +82,12 @@ describe("engine", () => {
     expect(computePlan(guide([g("a")]), sel()).topBlocker).toBeNull();
     const w = (id: string, kind: Gate["kind"], d: [number, number] | "unknown") => g(id, { kind, waitDays: d });
     expect(computePlan(guide([w("a", "review", [1, 5]), w("b", "legal", [1, 5]), w("c", "setup", [1, 2])]), sel()).topBlocker?.id).toBe("b");
-    expect(computePlan(guide([w("a", "review", [1, 50]), w("b", "setup", "unknown")]), sel()).topBlocker?.id).toBe("b");
+    expect(computePlan(guide([w("a", "review", [1, 5]), w("b", "setup", "unknown")]), sel()).topBlocker?.id).toBe("b");
+  });
+  it("topBlocker prefers a known wait over 7 days to unknown waits", () => {
+    const w = (id: string, kind: Gate["kind"], d: [number, number] | "unknown") => g(id, { kind, waitDays: d });
+    expect(computePlan(guide([w("a", "review", [1, 30]), w("b", "setup", "unknown"), w("c", "review", [1, 10])]), sel()).topBlocker?.id).toBe("a");
+    expect(computePlan(guide([w("a", "review", [1, 5]), w("b", "setup", "unknown")]), sel()).topBlocker?.id).toBe("b");
   });
   it("long-lead missing requirement is first in order with startDay1 true", () => {
     const gd = guide(

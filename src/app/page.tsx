@@ -25,7 +25,7 @@ export default function Home() {
               <div className="flex flex-wrap items-center gap-2">
                 <Link href={`/g/${g.slug}`} className="text-lg font-semibold text-zinc-950 underline-offset-2 hover:underline">{g.name}</Link>
                 <span data-tier={plan.tier} className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIER_STYLE[plan.tier]}`}>{TIER_LABEL[plan.tier]}</span>
-                <span className="text-xs text-zinc-600">{g.composio.managed === true ? "Composio-managed" : "Bring your own app"}</span>
+                <span className="text-xs text-zinc-600">{g.composio.managed === true ? "Composio-managed" : g.composio.managed === "unknown" ? "Composio coverage unknown" : "Bring your own app"}</span>
               </div>
               <dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
                 <div><dt className="text-xs text-zinc-600">Dev</dt><dd className="font-semibold tabular-nums">{clockLabel(plan.dev)}</dd></div>
@@ -35,6 +35,7 @@ export default function Home() {
             </li>
           ))}
         </ul>
+        <p className="mt-2 text-xs text-zinc-500">Computed from each guide&apos;s steps: provider waits carry their evidence badge; effort hours are our estimate.</p>
       </section>
 
       <section aria-labelledby="agents" className="mt-8">
@@ -65,8 +66,6 @@ export default function Home() {
 
       <footer className="mt-10 flex gap-4 border-t border-zinc-200 pt-4 text-sm">
         <Link href="/corrections" className="underline underline-offset-2">Corrections</Link>
-        {/* TODO: replace with the real GitHub repo URL */}
-        <a href="#" className="underline underline-offset-2">GitHub</a>
       </footer>
     </main>
   );

@@ -79,7 +79,7 @@ Tier and clocks are **computed in code** from the applicable gates, never writte
 - **Dev clock** = longest `dependsOn` path through `phase: "dev"` gates. **Production clock** = longest path through all applicable gates. Any `"unknown"` wait on the path renders as "≥ N days + unknown wait" — never a guessed number.
 - **Tier**: any `unavailable` → Blocked; any `partner` gate or production max > 21 days → Gated; any `review` → Review; else Self-serve.
 - **Readiness**: a missing requirement becomes a prerequisite node (duration = `acquireEffortHours/6 + acquireDays`) in front of every gate that `requires` it. *Your plan* = longest path with missing nodes; *If you had everything* = without them; *Fastest order* = topological order with long-lead nodes (acquire max > 7 days) first and marked "start day 1".
-- **#1 blocker** = applicable gate with the largest max wait (unknown counts as largest); ties → `unavailable` > `partner` > `legal` > `review`.
+- **#1 blocker** = if any applicable gate has a known max wait over 7 working days, the one with the largest known max; otherwise the gate with the largest max wait (unknown counts as largest); ties → `unavailable` > `partner` > `legal` > `review`.
 
 Showcase guides are JSON files in the repo (`/data/guides/*.json`), written from `docs/research/2026-10-27-provider-facts.md`, validated by Zod at build time.
 

@@ -84,4 +84,14 @@ describe("selection", () => {
     expect(toSearchParams(s)).toBe("?t.uses=send&t.audience=external&have=privacy_policy,homepage");
     expect(parseSelection(g, new URLSearchParams(toSearchParams(s)))).toEqual(s);
   });
+
+  it("github paid Marketplace is review tier, default is self-serve", () => {
+    expect(sel("github", "t.marketplace=paid").tier).toBe("review");
+    expect(sel("github").tier).toBe("self-serve");
+  });
+
+  it("topBlocker: gmail read is the restricted review; gusto is the partner gate", () => {
+    expect(sel("gmail").topBlocker?.id).toBe("restricted");
+    expect(sel("gusto").topBlocker?.id).toBe("preapproval");
+  });
 });

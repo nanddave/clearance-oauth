@@ -57,7 +57,7 @@
       "id": "listing",
       "title": "Paid Marketplace listing",
       "phase": "production",
-      "kind": "commercial",
+      "kind": "review",
       "owner": "provider",
       "effortHours": [
         2,

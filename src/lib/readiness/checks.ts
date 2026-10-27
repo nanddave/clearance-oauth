@@ -69,7 +69,11 @@ export function evaluateRule(rule: AutoCheckRule, pages: Pages): Omit<CheckResul
     case "support_email_on_domain": {
       const domain = stripWww(new URL(homepage.url).hostname).toLowerCase();
       const emails = [homepage, privacy]
-        .flatMap((p) => (p ? [...p.html.matchAll(/[a-z0-9._%+-]{1,64}@([a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63}){1,10})/gi)].map((m) => m[1].toLowerCase()) : []));
+        .flatMap((p) => {
+          if (!p) return [];
+          const mailto = [...p.html.matchAll(/mailto:([^"'\s<>?]{1,200})/gi)].map((m) => m[1]).join(" ");
+          return [...(text(p.html) + " " + mailto).matchAll(/[a-z0-9._%+-]{1,64}@([a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63}){0,9}\.[a-z]{2,24})(?![a-z0-9-])/gi)].map((m) => m[1].toLowerCase());
+        });
       if (!emails.length) return { status: "unsure", reason: "No email address found on the homepage or privacy page" };
       return emails.some((d) => d === domain || d.endsWith("." + domain))
         ? { status: "pass", reason: `Found an email address on ${domain}`, evidenceUrl: homepage.url }

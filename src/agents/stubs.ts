@@ -38,7 +38,7 @@ export function makeStubs(sleep: () => Promise<void> = defaultSleep): AgentImpls
       const now = new Date().toISOString();
       return parseGuide({
         slug,
-        name: query.trim(),
+        name: slug.split("-").filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" "),
         website: "",
         updatedAt: now,
         origin: "generated",

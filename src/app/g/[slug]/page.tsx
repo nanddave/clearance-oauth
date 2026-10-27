@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { toSlug } from "@/agents/pipeline";
 import { GuideView } from "@/components/GuideView";
 import { LiveLog } from "@/components/LiveLog";
 import { getGuide } from "@/lib/guides";
@@ -9,6 +11,7 @@ async function Guide({ params, searchParams }: PageProps<"/g/[slug]">) {
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(await searchParams)) for (const x of [v].flat()) if (x !== undefined) sp.append(k, x);
   const query = sp.toString();
+  if (toSlug(slug) !== slug) redirect(`/g/${toSlug(slug)}${query ? `?${query}` : ""}`);
   const guide = getGuide(slug);
   if (guide) return <GuideView key={slug} guide={guide} query={query} />;
   const job = getJob(slug);

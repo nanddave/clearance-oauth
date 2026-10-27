@@ -16,6 +16,7 @@ export const isReusable = (job: Job | undefined): job is Job => !!job && (job.st
 /** Registers the job synchronously and returns the running pipeline promise (never rejects). */
 export function startJob(slug: string, query: string, deps?: AgentImpls): Promise<void> {
   const job: Job = { status: "running", events: [] };
+  if (jobs.size > 500) jobs.delete(jobs.keys().next().value!); // shortcut: oldest-inserted eviction, not LRU
   jobs.set(slug, job);
   return runGeneration(query, (e) => job.events.push(e), deps).then(
     (guide) => {

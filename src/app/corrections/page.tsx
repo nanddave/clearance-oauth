@@ -1,3 +1,4 @@
+import { EvidenceBadge } from "@/components/EvidenceBadge";
 import { corrections } from "@/lib/corrections";
 
 export const metadata = { title: "Corrections · Clearance" };
@@ -12,7 +13,7 @@ export default function Corrections() {
           <li key={e.app + e.oldClaim} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold text-zinc-950">{e.app}</h2>
-              <span className="rounded-full bg-zinc-200 px-2.5 py-0.5 text-xs font-semibold text-zinc-800">{e.status}</span>
+              <EvidenceBadge status={e.status} />
               {e.changedOn && <span className="text-xs text-zinc-600">{e.changedOn}</span>}
             </div>
             <dl className="mt-2 space-y-2 text-sm">

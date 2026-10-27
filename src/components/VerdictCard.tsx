@@ -80,7 +80,7 @@ export function VerdictCard({ guide, plan, placeholder }: { guide: Guide; plan: 
           {TIER_LABEL[plan.tier]}
           {placeholder && " · placeholder"}
         </span>
-        <span className="text-sm text-zinc-600">{TIER_HINT[plan.tier]}</span>
+        {!placeholder && <span className="text-sm text-zinc-600">{TIER_HINT[plan.tier]}</span>}
       </div>
       <p className="mt-2 max-w-3xl text-sm text-zinc-700">{guide.summary}</p>
 

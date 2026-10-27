@@ -128,9 +128,10 @@ export function computePlan(guide: Guide, sel: Selection): Plan {
         ? "review"
         : "self-serve";
 
-  // #1 blocker: largest max wait (unknown = largest), ties by kind rank
+  // #1 blocker: a known max wait > 7 days beats unknown waits (largest known wins); else unknown = largest. Ties by kind rank.
+  const knownLong = gates.filter((x) => x.waitDays !== "unknown" && x.waitDays[1] > LONG_LEAD_DAYS);
   const waitOf = (x: Gate) => (x.waitDays === "unknown" ? Infinity : x.waitDays[1]);
-  const waiting = gates.filter((x) => waitOf(x) > 0);
+  const waiting = knownLong.length ? knownLong : gates.filter((x) => waitOf(x) > 0);
   const topBlocker = waiting.reduce<Gate | null>(
     (best, x) => (!best || waitOf(x) > waitOf(best) || (waitOf(x) === waitOf(best) && KIND_RANK[x.kind] > KIND_RANK[best.kind]) ? x : best),
     null,

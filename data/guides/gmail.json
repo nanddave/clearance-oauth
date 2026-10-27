@@ -170,7 +170,7 @@
       "blockers": [
         {
           "symptom": "Verification stalls while Google reviews",
-          "fix": "Start CASA and the demo video on day 1; Google says it might require several months, so 30 days is a floor."
+          "fix": "Start CASA and the demo video on day 1. Google says this might require several months; 30 working days is a floor."
         }
       ],
       "agentCan": "none",

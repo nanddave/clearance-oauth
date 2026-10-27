@@ -47,6 +47,12 @@ describe("pure helpers", () => {
     const r = evaluateRule({ type: "phrase_present", page: "privacy", anyOf: ["Limited Use"] }, { homepage: page(""), privacy: page("<p>we follow limited use rules</p>") });
     expect(r.status).toBe("pass");
   });
+  it("support_email_on_domain ignores asset/script URLs and reads mailto hrefs", () => {
+    const ev = (html: string) => evaluateRule({ type: "support_email_on_domain" }, { homepage: page(html), privacy: null }).status;
+    expect(ev('<img src="a@2x.png">')).toBe("unsure");
+    expect(ev('<script src="https://cdn/react@18.2.0/x.js"></script>')).toBe("unsure");
+    expect(ev('<a href="mailto:help@acme.com">Mail</a>')).toBe("pass");
+  });
   it("support_email_on_domain fails for gmail address", () => {
     expect(evaluateRule({ type: "support_email_on_domain" }, { homepage: page("mailto:me@gmail.com"), privacy: null }).status).toBe("fail");
     expect(evaluateRule({ type: "support_email_on_domain" }, { homepage: page("help@mail.acme.com"), privacy: null }).status).toBe("pass");
