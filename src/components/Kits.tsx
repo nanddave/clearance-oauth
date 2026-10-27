@@ -57,7 +57,7 @@ function GithubKit() {
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="block text-zinc-800">
           App name
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="My agent" className={input} />
+          <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme inbox agent" className={input} />
         </label>
         <label className="block text-zinc-800">
           Homepage

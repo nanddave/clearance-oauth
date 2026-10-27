@@ -118,7 +118,7 @@ export function agentView(guide: Guide, sel: Selection) {
     name: guide.name,
     origin: guide.origin,
     updatedAt: guide.updatedAt,
-    selection: { toggles: sel.toggles, have: [...sel.have] },
+    selection: { toggles: sel.toggles, have: [...sel.have], done: [...(sel.done ?? [])] },
     options: guide.toggles,
     answers: answers(guide, plan),
     verdict: {

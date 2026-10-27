@@ -52,7 +52,7 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
   const pathname = usePathname();
   const [sel, setSel] = useState<Selection>(() => parseSelection(guide, new URLSearchParams(query)));
   const plan = computePlan(guide, sel);
-  const relevant = computePlan(guide, { toggles: sel.toggles, have: new Set() }).missing;
+  const relevant = computePlan(guide, { toggles: sel.toggles, have: new Set(), done: sel.done }).missing;
   const next = nextAction(guide, plan);
   const stub = isStub(guide);
   const website = safeHref(guide.website);

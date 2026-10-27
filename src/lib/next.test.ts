@@ -65,7 +65,7 @@ describe("agentView", () => {
     const { g, s } = sel("gmail", "t.uses=send&have=privacy_policy");
     const v = JSON.parse(JSON.stringify(agentView(g, s)));
     expect(v.version).toBe(1);
-    expect(v.selection).toEqual({ toggles: { uses: "send", audience: s.toggles.audience }, have: ["privacy_policy"] });
+    expect(v.selection).toEqual({ toggles: { uses: "send", audience: s.toggles.audience }, have: ["privacy_policy"], done: [] });
     expect(v.verdict.clocks.yours.label).toBeTypeOf("string");
     expect(v.nextAction.title).toBeTypeOf("string");
   });

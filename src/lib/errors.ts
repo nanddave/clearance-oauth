@@ -13,8 +13,8 @@ export const KNOWN_ERRORS: KnownError[] = [
     id: "google_not_test_user",
     apps: ["gmail"],
     match: /access_denied|has not completed the Google verification process|not been verified by Google/i,
-    meaning: "Your Google app is in Testing and this account is not on its test-user list, or the app isn't verified for these scopes.",
-    fix: "Add the account under Google Auth Platform → Audience → Test users (100 at most), or finish verification.",
+    meaning: "Either the user clicked Cancel on Google's consent screen, or your app is in Testing and this account isn't on its test-user list.",
+    fix: "If nobody cancelled: add the account under Google Auth Platform → Audience → Test users (100 at most), or finish verification.",
     gate: "create_project",
   },
   {

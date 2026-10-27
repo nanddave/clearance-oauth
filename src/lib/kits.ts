@@ -38,6 +38,7 @@ export function setupScript(guide: Guide): string {
 import { Composio } from "@composio/core";
 
 const composio = new Composio();
+// "${guide.slug}" is our name for it; check Composio's toolkit list if create fails
 const authConfig = await composio.authConfigs.create("${guide.slug}", {
   type: "use_custom_auth",
   authScheme: "OAUTH2",
