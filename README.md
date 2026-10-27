@@ -1,6 +1,6 @@
 # Clearance
 
-**Live:** _deployed URL goes here_ · **Repo:** this one
+**Live:** https://clearance-oauth.vercel.app · **Repo:** this one
 
 Composio's shared OAuth apps get an agent live on day one. Two things take a developer off that path: putting their own app's name on the consent screen, which Composio's docs recommend for production, or needing one of the 258 apps Composio doesn't manage. Either way they now face provider review queues, security audits, partner programs and paid tiers, and Composio's guides stop at "Ready to Submit".
 
