@@ -18,8 +18,13 @@ export async function getJob(slug: string): Promise<Job | undefined> {
   return job;
 }
 
-/** A running job or one that produced a guide is reused; a failed or guide-less job is replaced on retry. */
-export const isReusable = (job: Job | undefined): job is Job => !!job && (job.status === "running" || (job.status === "done" && !!job.guide));
+const REFRESH_MS = 30 * 86400_000; // research older than this is redone on the next request; the old link keeps working until then
+
+/** A running job or a recent guide is reused; a failed, guide-less or month-old job is replaced on request. */
+export const isReusable = (job: Job | undefined): job is Job =>
+  !!job &&
+  (job.status === "running" ||
+    (job.status === "done" && !!job.guide && Date.now() - Date.parse(job.guide.updatedAt) < REFRESH_MS));
 
 /** Only one research run per app at a time, across instances. */
 export const claimRun = (slug: string) => kvSetNx(`lease:${slug}`, 1, Math.ceil(STALE_MS / 1000));

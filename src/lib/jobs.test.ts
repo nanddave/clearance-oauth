@@ -10,8 +10,10 @@ describe("job reuse on retry", () => {
     expect(isReusable({ status: "running", events: [] })).toBe(true);
     expect(isReusable({ status: "failed", events: [] })).toBe(false);
     expect(isReusable({ status: "done", events: [] })).toBe(false);
-    const guide = {} as never;
+    const guide = { updatedAt: new Date().toISOString() } as never;
     expect(isReusable({ status: "done", events: [], guide })).toBe(true);
+    const old = { updatedAt: "2020-01-01" } as never;
+    expect(isReusable({ status: "done", events: [], guide: old })).toBe(false); // month-old research is redone
   });
 
   it("is saved as running before the pipeline starts, and done after", async () => {

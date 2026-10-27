@@ -75,7 +75,7 @@ async function screen(raw: string, resolve: Resolver): Promise<{ error: string }
     try { addrs = await Promise.race([resolve(host), new Promise<never>((_, rej) => setTimeout(() => rej(new Error("dns timeout")), 3000).unref())]); } catch { return { error: "Host could not be resolved" }; }
   }
   if (!addrs.length || addrs.some(isBlockedAddress)) return { error: "That address is not allowed (private or internal)" };
-  return { address: addrs[0] };
+  return { address: addrs.find((a) => isIP(a) === 4) ?? addrs[0] }; // prefer IPv4: some runtimes have no IPv6 route
 }
 
 /**
@@ -86,15 +86,16 @@ function pinnedFetch(address: string): typeof fetch {
   return (input, init) =>
     new Promise<Response>((resolve, reject) => {
       const u = new URL(String(input));
+      const host = u.hostname.replace(/^\[|\]$/g, ""); // IPv6 literals come bracketed
       const family = isIP(address);
       const req = request(
         {
-          hostname: u.hostname,
+          hostname: host,
           port: u.port || 443,
           path: u.pathname + u.search,
           method: "GET",
           headers: init?.headers as Record<string, string>,
-          servername: isIP(u.hostname) ? undefined : u.hostname,
+          servername: isIP(host) ? undefined : host,
           signal: init?.signal ?? undefined,
           lookup: (_host, opts, cb) =>
             (opts as { all?: boolean }).all ? (cb as unknown as (e: null, a: { address: string; family: number }[]) => void)(null, [{ address, family }]) : cb(null, address, family),
@@ -144,7 +145,8 @@ export async function safeFetch(
       res = await (fetchImpl ?? pinnedFetch(screened.address))(current, {
         redirect: "manual",
         signal: deadline ? AbortSignal.any([deadline, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000),
-        headers: { "User-Agent": "ClearanceReadinessCheck/0.1", Accept: "text/html,*/*;q=0.5" },
+        // identity: node's https doesn't decompress, so ask for plain text
+        headers: { "User-Agent": "ClearanceReadinessCheck/0.1", Accept: "text/html,*/*;q=0.5", "Accept-Encoding": "identity" },
       });
     } catch {
       return { error: "Request failed or timed out" };
@@ -155,6 +157,8 @@ export async function safeFetch(
       await res.body?.cancel().catch(() => {});
       continue;
     }
+    const enc = res.headers.get("content-encoding");
+    if (enc && enc !== "identity") return { error: `Server sent compressed content (${enc})` };
     try {
       return { ok: res.ok, status: res.status, finalUrl: current, html: await readCapped(res) };
     } catch {
