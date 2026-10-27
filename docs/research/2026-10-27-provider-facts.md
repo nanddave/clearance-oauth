@@ -26,7 +26,8 @@ Labels: **[O]** official page fetched · **[R]** third-party/forum · **[C]** so
 - `gmail.send` = Sensitive; `gmail.readonly`, `gmail.modify`, `gmail.compose`, `gmail.metadata`, `mail.google.com/` = Restricted. [O] https://developers.google.com/workspace/gmail/api/auth/scopes
 - Brand verification 2–3 business days [O]. Sensitive verification [C]: 10 business days (https://support.google.com/cloud/answer/13463817) vs 3–5 (production-readiness page). Restricted ≈6 weeks [O]; "might require several months" https://support.google.com/cloud/answer/7454865
 - CASA: required when restricted data passes a third-party server; empanelled assessor; AL1/AL2; annual full re-test. [O] https://support.google.com/cloud/answer/13465431 . Cost not published by Google; vendor estimate ~$3k–15k [R].
-- Unverified apps: 100 new users lifetime, cannot be reset. [O] Internal Workspace apps exempt. [O]
+- Unverified apps: 100 new users lifetime, cannot be reset. [O] https://support.google.com/cloud/answer/7454865 · https://support.google.com/cloud/answer/13463817 . Internal Workspace apps, personal use and dev/test builds exempt from verification. [O, same pages; summarized by research agent, exact wording not captured]
+- Brand verification "typically 2–3 business days" — research agent tagged [O] but did not record which Google page; treat as [R] until a URL is captured.
 - Testing-mode refresh tokens expire after 7 days. [O-u]
 
 ## Slack
@@ -41,7 +42,7 @@ Labels: **[O]** official page fetched · **[R]** third-party/forum · **[C]** so
 ## Gusto
 - Dev portal → org → app → client ID; sandbox api.gusto-demo.com only. [O] https://docs.gusto.com/app-integrations/docs/introduction
 - Production: Pre-Approval application (incl. security review) — "Production access is gated, and not all applications are approved" → Partner Checklist to developer@gusto.com → QA review → production keys. [O]
-- Durations [NF] officially; security review ~1 week (Merge) vs 2–4 weeks (Finch) [C][R].
+- Durations [NF] officially; security review ~1 week (Merge: https://help.merge.dev/en/articles/10354314-gusto-how-do-i-set-up-my-integration) vs 2–4 weeks (Finch: https://developer.tryfinch.com/implementation-guide/Deploy/Security-Reviews) [C][R].
 
 ## Not verifiable this session
 DocuSign Go-Live page body (JS-rendered), Xero devblog (403), Gusto FAQ (403); dev-setup steps for Google/Slack/DocuSign from prior knowledge.
