@@ -10,6 +10,9 @@ const jobs = (g.__clearanceJobs ??= new Map<string, Job>());
 
 export const getJob = (slug: string): Job | undefined => jobs.get(slug);
 
+/** A running job or one that produced a guide is reused; a failed or guide-less job is replaced on retry. */
+export const isReusable = (job: Job | undefined): job is Job => !!job && (job.status === "running" || (job.status === "done" && !!job.guide));
+
 /** Registers the job synchronously and returns the running pipeline promise (never rejects). */
 export function startJob(slug: string, query: string, deps?: AgentImpls): Promise<void> {
   const job: Job = { status: "running", events: [] };

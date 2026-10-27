@@ -18,8 +18,8 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (status !== "running") return;
-    const id = setInterval(async () => {
+    if (status !== "running" && status !== "failed") return;
+    const poll = async () => {
       const res = await fetch(`/api/jobs/${encodeURIComponent(slug)}`).catch(() => null);
       if (!res) return; // network blip: try again next tick
       if (res.status === 404) return setStatus("gone");
@@ -29,7 +29,12 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
       setEvents(job.events ?? []);
       if (job.status === "done" && job.guide) setGuide(job.guide);
       else if (job.status !== "running") setStatus("failed"); // failed, or done without a guide
-    }, 1000);
+    };
+    if (status === "failed") {
+      poll(); // one fetch so a failed job opened by link still shows its log
+      return;
+    }
+    const id = setInterval(poll, 1000);
     return () => clearInterval(id);
   }, [slug, status]);
 

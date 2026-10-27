@@ -98,7 +98,7 @@ export function VerdictCard({ guide, plan, placeholder }: { guide: Guide; plan: 
           <span className="font-medium">#1 blocker: </span>
           {b ? (
             <>
-              {b.title} — wait {waitLabel(b.waitDays)} {b.waitDays !== "unknown" && <NumberSource status={weakestStatus(guide, b.claimIds)} />}
+              {b.title} — wait {waitLabel(b.waitDays)} {b.waitDays !== "unknown" && b.waitDays[1] > 0 && <NumberSource status={weakestStatus(guide, b.claimIds)} />}
             </>
           ) : (
             "nothing — no provider wait in your path"
