@@ -19,17 +19,19 @@ export function findPrivacyLink(html: string, baseUrl: string): string | null {
   return null;
 }
 
-// indexOf loop: regex versions are quadratic on repeated unclosed tags
+// Linear: one regex scan forward + indexOf for the close tag. Works on the lowercased string only
+// (output is used for case-insensitive matching; toLowerCase can change length so never mix indices).
 function stripBlocks(html: string): string {
   const lower = html.toLowerCase();
+  const open = /<(script|style)\b/g;
   let out = "";
   let i = 0;
   for (;;) {
-    const starts = ["<script", "<style"].map((t) => lower.indexOf(t, i)).filter((n) => n >= 0);
-    if (!starts.length) return out + html.slice(i);
-    const a = Math.min(...starts);
-    out += html.slice(i, a) + " ";
-    const end = lower.indexOf(lower.startsWith("<script", a) ? "</script" : "</style", a);
+    open.lastIndex = i;
+    const m = open.exec(lower);
+    if (!m) return out + lower.slice(i);
+    out += lower.slice(i, m.index) + " ";
+    const end = lower.indexOf("</" + m[1], m.index);
     if (end < 0) return out;
     i = end + 2;
   }
@@ -80,16 +82,17 @@ export async function runChecks(
   homepageUrl: string,
   rules: { reqId: string; rule: AutoCheckRule }[],
   resolve?: Resolver,
+  fetchImpl: typeof fetch = fetch,
 ): Promise<CheckResult[]> {
   const pages: Pages = { homepage: null, privacy: null };
   const signal = AbortSignal.timeout(10000); // shared deadline for the whole run
-  const home = await safeFetch(homepageUrl, resolve, fetch, signal);
+  const home = await safeFetch(homepageUrl, resolve, fetchImpl, signal);
   if ("error" in home) pages.homepageError = home.error;
   else {
     pages.homepage = { url: home.finalUrl, status: home.status, html: home.html };
     const link = !home.ok ? null : findPrivacyLink(home.html, home.finalUrl);
     if (link) {
-      const p = await safeFetch(link, resolve, fetch, signal);
+      const p = await safeFetch(link, resolve, fetchImpl, signal);
       if (!("error" in p) && p.ok) pages.privacy = { url: p.finalUrl, status: p.status, html: p.html };
     }
   }

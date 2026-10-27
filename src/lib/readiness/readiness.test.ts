@@ -74,7 +74,7 @@ describe("pure helpers", () => {
   it("findPrivacyLink and text stripping are linear on adversarial input", () => {
     expect(ms(() => findPrivacyLink('<a href="p">'.repeat(MB / 12), "https://acme.com/"))).toBeLessThan(500);
     expect(ms(() => findPrivacyLink("<a ".repeat(MB / 3), "https://acme.com/"))).toBeLessThan(500);
-    for (const h of ["<script>".repeat(MB / 8), "<".repeat(MB), "<style>x".repeat(MB / 8)])
+    for (const h of ["<script>".repeat(MB / 8), "<".repeat(MB), "<style>x".repeat(MB / 8), "<script></script>".repeat(MB / 17), "<style></style>".repeat(MB / 15), "<script></style>".repeat(MB / 16) + "</script>"])
       expect(ms(() => evaluateRule({ type: "phrase_present", page: "homepage", anyOf: ["x"] }, { homepage: pg(h), privacy: null }))).toBeLessThan(500);
   });
   it("non-2xx homepage: dependents unsure, homepage_loads fails", () => {
@@ -82,5 +82,12 @@ describe("pure helpers", () => {
     expect(evaluateRule({ type: "homepage_loads" }, pages).status).toBe("fail");
     for (const rule of [{ type: "privacy_policy_found" }, { type: "support_email_on_domain" }, { type: "phrase_present", page: "homepage", anyOf: ["x"] }] satisfies AutoCheckRule[])
       expect(evaluateRule(rule, pages).status).toBe("unsure");
+  });
+  it("500 homepage triggers no privacy fetch", async () => {
+    let calls = 0;
+    const f = (async () => { calls++; return new Response("<a href='/privacy'>privacy</a>", { status: 500 }); }) as unknown as typeof fetch;
+    const res = await runChecks("https://acme.com", [{ reqId: "p", rule: { type: "privacy_policy_found" } }], pub, f);
+    expect(calls).toBe(1);
+    expect(res[0].status).toBe("unsure");
   });
 });
