@@ -11,12 +11,13 @@ Labels: **[O]** official page fetched · **[R]** third-party/forum · **[C]** so
 ## DocuSign
 - **20-API-call Go-Live rule eliminated** — "eliminates the requirement to make 20 API calls" (newsletter Nov 3 2025) [O] https://developers.docusign.com/html/newsletter/202511.html ; community announcement Oct 3 2025 [O] https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623
 - New flow: pick integration type + production account in Apps & Keys → Approved instantly / Needs review / Not allowed. Reviews "typically completed within 48 hours or less". [O, same post]
-- Needs a paid production account with admin/developer access. Public integrations need Partner Program membership; embedded needs a special license; integration type can't change once in review. [O]
+- Needs a paid production account with admin/developer access. [O, via search snippet] https://developers.docusign.com/docs/esign-rest-api/go-live/
+- Public integrations need Partner Program membership; embedded needs a special license; integration type can't change once in review. [O] https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623
 - After Go-Live, secrets and redirect URIs are not copied to production. [O, via snippet] https://developers.docusign.com/docs/esign-rest-api/go-live/
 - [C] Older threads/integrator docs still cite 20 calls — superseded.
 
 ## Xero
-- Tiers from 2 Mar 2026 [O] https://developer.xero.com/pricing : Starter 5 conns free · Core 50 A$35/mo · Plus 1,000 A$245 · Advanced 10,000 A$1,445 · Enterprise POA. Starter 1,000 calls/day/org, others 5,000. Payment method from Core. "Connections are capped at the tier maximums until you meet that tier's requirements." [O] https://developer.xero.com/faq/pricing-and-policy-updates
+- Tiers from 2 Mar 2026 [O] https://developer.xero.com/pricing : Starter 5 conns free · Core 50 A$35/mo · Plus 1,000 A$245 · Advanced 10,000 A$1,445 · Enterprise POA. Starter 1,000 calls/day/org, others 5,000. Payment method from Core [O, FAQ]. "Connections are capped at the tier maximums until you meet that tier's requirements." [O] https://developer.xero.com/faq/pricing-and-policy-updates
 - Security assessment + use-case approval for Journals / Practice Manager / Bulk Connections (Advanced+). [O]
 - [C] "25 uncertified connections" in Apideck/Fivetran docs — not in Xero's 2026 pages; treat as pre-Mar-2026. https://fivetran.com/docs/connectors/applications/xero
 - [C] Certification beta-customer count: 10 (devblog title) vs 3 (older PDF).
@@ -41,7 +42,7 @@ Labels: **[O]** official page fetched · **[R]** third-party/forum · **[C]** so
 
 ## Gusto
 - Dev portal → org → app → client ID; sandbox api.gusto-demo.com only. [O] https://docs.gusto.com/app-integrations/docs/introduction
-- Production: Pre-Approval application (incl. security review) — "Production access is gated, and not all applications are approved" → Partner Checklist to developer@gusto.com → QA review → production keys. [O]
+- Production [O] https://docs.gusto.com/app-integrations/docs/introduction : Pre-Approval application (incl. security review) — "Production access is gated, and not all applications are approved" → Partner Checklist to developer@gusto.com → QA review → production keys. [O]
 - Durations [NF] officially; security review ~1 week (Merge: https://help.merge.dev/en/articles/10354314-gusto-how-do-i-set-up-my-integration) vs 2–4 weeks (Finch: https://developer.tryfinch.com/implementation-guide/Deploy/Security-Reviews) [C][R].
 
 ## Not verifiable this session
