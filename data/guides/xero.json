@@ -50,7 +50,7 @@
       "blockers": [],
       "agentCan": "draft",
       "claimIds": [],
-      "nextStep": "At developer.xero.com → My Apps → New app (Web app), add the redirect URI Composio shows when you create a custom auth config."
+      "nextStep": "At developer.xero.com → My Apps → New app (Web app), add the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback."
     },
     {
       "id": "subscribe",
@@ -157,7 +157,9 @@
     {
       "id": "tier_reqs",
       "label": "Meet the tier's requirements (not clearly published)",
-      "howToGet": [],
+      "howToGet": [
+        "Ask Xero developer support what your tier requires before you pass its connection cap."
+      ],
       "acquireDays": "unknown",
       "acquireEffortHours": [
         0,

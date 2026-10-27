@@ -69,7 +69,7 @@
       "blockers": [],
       "agentCan": "draft",
       "claimIds": [],
-      "nextStep": "In Apps & Keys, add an app and integration key, then add the redirect URI Composio shows when you create a custom auth config. Pick private vs public now — it can't change once in review."
+      "nextStep": "In Apps & Keys, add an app and integration key, then add the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback. Pick private vs public now — it can't change once in review."
     },
     {
       "id": "go_live",

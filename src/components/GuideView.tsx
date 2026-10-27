@@ -8,7 +8,9 @@ import { isStub, safeHref } from "@/lib/display";
 import { parseSelection, toSearchParams } from "@/lib/selection";
 import { answers, composioNote, nextAction } from "@/lib/next";
 import { ClaimList } from "./ClaimList";
-import { AnswersTable, NextActionCard } from "./NextActionCard";
+import { ErrorDecoder, KitList } from "./Kits";
+import { kitsFor } from "@/lib/kits";
+import { AnswersTable, NextActionCard, StageTracker } from "./NextActionCard";
 import { FastestOrder, PathList } from "./PathList";
 import { ReadinessChecklist } from "./ReadinessChecklist";
 import { Toggles } from "./Toggles";
@@ -51,6 +53,7 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
   const [sel, setSel] = useState<Selection>(() => parseSelection(guide, new URLSearchParams(query)));
   const plan = computePlan(guide, sel);
   const relevant = computePlan(guide, { toggles: sel.toggles, have: new Set() }).missing;
+  const next = nextAction(guide, plan);
   const stub = isStub(guide);
   const website = safeHref(guide.website);
 
@@ -68,6 +71,13 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
       const have = new Set(s.have);
       ids.forEach((id) => (on ? have.add(id) : have.delete(id)));
       return { ...s, have };
+    });
+  const setDone = (id: string, on: boolean) =>
+    update((s) => {
+      const done = new Set(s.done);
+      if (on) done.add(id);
+      else done.delete(id);
+      return { ...s, done };
     });
 
   return (
@@ -96,7 +106,15 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
 
       <VerdictCard guide={guide} plan={plan} placeholder={stub} note={composioNote(guide, sel)} />
       <AnswersTable answers={answers(guide, plan)} />
-      <NextActionCard action={nextAction(guide, plan)} />
+      <StageTracker
+        steps={plan.gates.map((g) => ({ id: g.id, title: g.title, done: !!sel.done?.has(g.id), next: next?.kind === "gate" && next.id === g.id }))}
+        onToggle={setDone}
+      />
+      <NextActionCard
+        action={next}
+        kits={next ? kitsFor(guide, next.id) : []}
+        onDone={() => next && (next.kind === "gate" ? setDone(next.id, true) : setHave([next.id], true))}
+      />
 
       {guide.toggles.length > 0 && (
         <Section id="toggles" title="What does your agent need?" hint="Change these and the verdict updates.">
@@ -123,7 +141,11 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
       </Section>
 
       <Section id="path" title="Path">
-        <PathList guide={guide} plan={plan} />
+        <PathList guide={guide} plan={plan} renderKits={(id) => (kitsFor(guide, id).length ? <KitList kits={kitsFor(guide, id)} /> : null)} />
+      </Section>
+
+      <Section id="errors" title="Got an error?" hint="We match it against known setup errors; nothing is guessed.">
+        <ErrorDecoder slug={guide.slug} />
       </Section>
 
       <Section id="evidence" title="Evidence" hint="Tested = we ran it · Official = provider docs · Reported = third-party reports · Conflicting = sources disagree · Unknown = not verified.">

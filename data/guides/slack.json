@@ -73,9 +73,9 @@
       "dependsOn": [],
       "requires": [],
       "blockers": [],
-      "agentCan": "draft",
+      "agentCan": "do",
       "claimIds": [],
-      "nextStep": "At api.slack.com/apps → Create New App → From a manifest, add your bot scopes and the redirect URI Composio shows when you create a custom auth config."
+      "nextStep": "At api.slack.com/apps → Create New App → From a manifest, add your bot scopes and the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback."
     },
     {
       "id": "nonmarketplace_limits",

@@ -94,7 +94,7 @@
         "g_cap",
         "g_exempt"
       ],
-      "nextStep": "In Google Cloud console: create a project, enable the Gmail API, fill in Google Auth Platform → Branding, then create an OAuth client (Web application) with the redirect URI Composio shows when you create a custom auth config. Add yourself as a test user."
+      "nextStep": "In Google Cloud console: create a project, enable the Gmail API, fill in Google Auth Platform → Branding, then create an OAuth client (Web application) with the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback. Add yourself as a test user."
     },
     {
       "id": "brand",
@@ -308,7 +308,9 @@
     {
       "id": "limited_use",
       "label": "Limited Use disclosure in the privacy policy",
-      "howToGet": [],
+      "howToGet": [
+        "Add Google's Limited Use statement to your privacy policy; the exact sentence is ready to copy."
+      ],
       "acquireDays": [
         0,
         1
@@ -343,7 +345,9 @@
     {
       "id": "support_email",
       "label": "Support email on your domain",
-      "howToGet": [],
+      "howToGet": [
+        "Publish a support address on your own domain (for example support@yourapp.com) on your homepage or contact page."
+      ],
       "acquireDays": [
         0,
         1

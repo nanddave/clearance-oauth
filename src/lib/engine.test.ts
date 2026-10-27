@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import type { Gate, Guide, Requirement } from "./schema";
 import { computePlan, formatClock, type Selection } from "./engine";
+import { getGuide } from "./guides";
+import { parseSelection, toSearchParams } from "./selection";
 
 const g = (id: string, o: Partial<Gate> = {}): Gate => ({
   id, title: id, phase: "production", kind: "setup", owner: "you", effortHours: [0, 0], waitDays: [0, 0],
@@ -107,5 +109,33 @@ describe("engine", () => {
     expect(formatClock({ min: 3, max: 3, unknown: false })).toBe("3 days");
     expect(formatClock({ min: 3, max: 3, unknown: true })).toBe("≥ 3 days + unknown");
     expect(formatClock({ min: 0, max: 0.5, unknown: false })).toBe("same day");
+  });
+});
+
+describe("done gates", () => {
+  const g = getGuide("docusign")!;
+  const sel = (q: string) => parseSelection(g, new URLSearchParams(q));
+
+  it("drop out of the order and the next step, while dependants still schedule", () => {
+    const all = computePlan(g, sel(""));
+    const after = computePlan(g, sel("done=dev_account"));
+    expect(all.order[0].id).toBe("dev_account");
+    expect(after.order.some((o) => o.id === "dev_account")).toBe(false);
+    expect(after.order.some((o) => o.id === "integration_key")).toBe(true);
+    expect(after.yours.max).toBeLessThanOrEqual(all.yours.max);
+  });
+
+  it("all done: empty order, no blocker, tier unchanged", () => {
+    const ids = computePlan(g, sel("")).gates.map((x) => x.id).join(",");
+    const p = computePlan(g, sel(`done=${ids}&have=paid_account`));
+    expect(p.order).toEqual([]);
+    expect(p.topBlocker).toBeNull();
+    expect(p.tier).toBe(computePlan(g, sel("")).tier);
+  });
+
+  it("ignores unknown ids and round-trips through the URL", () => {
+    const s = sel("done=dev_account,nope");
+    expect([...s.done!]).toEqual(["dev_account"]);
+    expect(toSearchParams(s)).toContain("done=dev_account");
   });
 });

@@ -31,7 +31,7 @@
       "claimIds": [
         "u_sandbox"
       ],
-      "nextStep": "Create a developer account and an app in Gusto's developer portal; use the sandbox (api.gusto-demo.com) with the redirect URI Composio shows when you create a custom auth config."
+      "nextStep": "Create a developer account and an app in Gusto's developer portal; use the sandbox (api.gusto-demo.com) with the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback."
     },
     {
       "id": "preapproval",

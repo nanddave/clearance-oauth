@@ -32,7 +32,7 @@ Rules:
 - Every gate has nextStep: the exact action, where to click, what to paste. Every gate or requirement with an unknown wait has whatToAsk: the question and whom to ask.
 - Status per claim: "reported", or "conflicting" when findings disagree. Code sets the final status.
 - toggles only when the use (scopes, audience, distribution) changes the gates; else [].
-- Redirect URI: tell the developer to use the redirect URI Composio shows for a custom auth config.
+- Redirect URI: tell the developer to register https://backend.composio.dev/api/v3/toolkits/auth/callback.
 - summary: two sentences, plain words, lead with the longest wait.`;
 
 /** Real agents for one run: they share the pages the web tools returned and one deadline. */

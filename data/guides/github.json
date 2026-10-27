@@ -66,11 +66,11 @@
           "fix": "Ask an org owner to approve it."
         }
       ],
-      "agentCan": "draft",
+      "agentCan": "do",
       "claimIds": [
         "h_apps"
       ],
-      "nextStep": "In GitHub → Settings → Developer settings → GitHub Apps → New GitHub App, set the callback URL to the redirect URI Composio shows when you create a custom auth config and choose only the permissions you need."
+      "nextStep": "In GitHub → Settings → Developer settings → GitHub Apps → New GitHub App, set the callback URL to the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback and choose only the permissions you need."
     },
     {
       "id": "listing",
@@ -108,7 +108,9 @@
     {
       "id": "verified_publisher",
       "label": "Verified publisher",
-      "howToGet": [],
+      "howToGet": [
+        "Apply for publisher verification from your organization's Marketplace settings on GitHub."
+      ],
       "acquireDays": "unknown",
       "acquireEffortHours": [
         1,

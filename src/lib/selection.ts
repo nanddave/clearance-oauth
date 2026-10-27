@@ -9,11 +9,14 @@ export function parseSelection(guide: Guide, params: URLSearchParams): Selection
   }
   const known = new Set(guide.requirements.map((r) => r.id));
   const have = new Set((params.get("have") ?? "").split(",").filter((id) => known.has(id)));
-  return { toggles, have };
+  const gates = new Set(guide.gates.map((g) => g.id));
+  const done = new Set((params.get("done") ?? "").split(",").filter((id) => gates.has(id)));
+  return { toggles, have, done };
 }
 
 export function toSearchParams(sel: Selection): string {
   const parts = Object.entries(sel.toggles).map(([k, v]) => `t.${k}=${v}`);
   if (sel.have.size) parts.push(`have=${[...sel.have].join(",")}`);
+  if (sel.done?.size) parts.push(`done=${[...sel.done].join(",")}`);
   return parts.length ? `?${parts.join("&")}` : "";
 }

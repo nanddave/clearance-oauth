@@ -31,7 +31,7 @@ export function FastestOrder({ guide, plan }: { guide: Guide; plan: Plan }) {
   );
 }
 
-export function PathList({ guide, plan }: { guide: Guide; plan: Plan }) {
+export function PathList({ guide, plan, renderKits }: { guide: Guide; plan: Plan; renderKits?: (id: string) => React.ReactNode }) {
   const rank = new Map(plan.order.map((o, i) => [o.kind + o.id, i]));
   const gates = [...plan.gates].sort((a, b) => (rank.get("gate" + a.id) ?? 0) - (rank.get("gate" + b.id) ?? 0));
   const titleOf = (id: string) => guide.gates.find((g) => g.id === id)?.title ?? id;
@@ -68,6 +68,12 @@ export function PathList({ guide, plan }: { guide: Guide; plan: Plan }) {
             </div>
           </dl>
           {g.nextStep && <p className="mt-2 text-sm text-zinc-700">{g.nextStep}</p>}
+          {renderKits?.(g.id) && (
+            <details className="mt-2 text-sm">
+              <summary className="cursor-pointer text-xs text-zinc-700 underline underline-offset-2">What we can do or prepare for this step</summary>
+              {renderKits(g.id)}
+            </details>
+          )}
           {g.whatToAsk && <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-950">Wait unknown — {g.whatToAsk}</p>}
           {g.dependsOn.length > 0 && <p className="mt-2 text-xs text-zinc-600">After: {g.dependsOn.map(titleOf).join(", ")}</p>}
           {g.blockers.length > 0 && (

@@ -1,6 +1,6 @@
 import type { Gate, Guide, Requirement } from "./schema";
 
-export type Selection = { toggles: Record<string, string>; have: Set<string> };
+export type Selection = { toggles: Record<string, string>; have: Set<string>; done?: Set<string> }; // done: gate ids already passed
 export type Clock = { min: number; max: number; unknown: boolean };
 export type Plan = {
   tier: "self-serve" | "review" | "gated" | "blocked";
@@ -86,13 +86,15 @@ export function computePlan(guide: Guide, sel: Selection): Plan {
     missingIds.add(id);
     q.dependsOn.forEach(walk);
   };
-  gates.forEach((x) => x.requires.forEach(walk));
+  const isDone = (x: Gate) => !!sel.done?.has(x.id);
+  gates.filter((x) => !isDone(x)).forEach((x) => x.requires.forEach(walk));
 
+  // a done gate stays in the graph at zero time so its dependants still schedule after it
   const gateNode = (x: Gate, withReqs: boolean) =>
     node(
       "g:" + x.id,
-      x.effortHours,
-      x.waitDays,
+      isDone(x) ? [0, 0] : x.effortHours,
+      isDone(x) ? [0, 0] : x.waitDays,
       [
         ...x.dependsOn.filter((d) => gateIds.has(d)).map((d) => "g:" + d),
         ...(withReqs ? x.requires.filter((d) => missingIds.has(d)).map((d) => "r:" + d) : []),
@@ -109,7 +111,7 @@ export function computePlan(guide: Guide, sel: Selection): Plan {
     devReqIds.add(id);
     reqs.get(id)!.dependsOn.forEach(walkDev);
   };
-  devGates.forEach((x) => x.requires.forEach(walkDev));
+  devGates.filter((x) => !isDone(x)).forEach((x) => x.requires.forEach(walkDev));
 
   const yoursNodes = [...gates.map((x) => gateNode(x, true)), ...missingList.map(reqNode)];
   const yours = clock(yoursNodes); // also detects cycles across every applicable node
@@ -129,9 +131,10 @@ export function computePlan(guide: Guide, sel: Selection): Plan {
         : "self-serve";
 
   // #1 blocker: a known max wait > 7 days beats unknown waits (largest known wins); else unknown = largest. Ties by kind rank.
-  const knownLong = gates.filter((x) => x.waitDays !== "unknown" && x.waitDays[1] > LONG_LEAD_DAYS);
+  const open = gates.filter((x) => !isDone(x));
+  const knownLong = open.filter((x) => x.waitDays !== "unknown" && x.waitDays[1] > LONG_LEAD_DAYS);
   const waitOf = (x: Gate) => (x.waitDays === "unknown" ? Infinity : x.waitDays[1]);
-  const waiting = knownLong.length ? knownLong : gates.filter((x) => waitOf(x) > 0);
+  const waiting = knownLong.length ? knownLong : open.filter((x) => waitOf(x) > 0);
   const topBlocker = waiting.reduce<Gate | null>(
     (best, x) => (!best || waitOf(x) > waitOf(best) || (waitOf(x) === waitOf(best) && KIND_RANK[x.kind] > KIND_RANK[best.kind]) ? x : best),
     null,
@@ -149,7 +152,8 @@ export function computePlan(guide: Guide, sel: Selection): Plan {
     remaining.forEach((ps) => ps.delete(next));
   }
 
-  return { tier, dev, ideal, yours, topBlocker, missing: missingList, order, gates };
+  const doneIds = new Set(gates.filter(isDone).map((x) => x.id));
+  return { tier, dev, ideal, yours, topBlocker, missing: missingList, order: order.filter((o) => !(o.kind === "gate" && doneIds.has(o.id))), gates };
 }
 
 export function formatClock(c: Clock): string {

@@ -30,7 +30,7 @@ describe("nextAction", () => {
 
   it("maps agentCan to who does it", () => {
     const { g, s } = sel("slack", "t.distribution=internal");
-    expect(nextAction(g, computePlan(g, s))).toMatchObject({ id: "create_app", who: "draft" });
+    expect(nextAction(g, computePlan(g, s))).toMatchObject({ id: "create_app", who: "do" });
   });
 });
 
