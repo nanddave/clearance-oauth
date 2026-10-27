@@ -4,7 +4,7 @@
 
 Composio's shared OAuth apps get an agent live on day one. Two things take a developer off that path: putting their own app's name on the consent screen, which Composio's docs recommend for production, or needing one of the 258 apps Composio doesn't manage. Either way they now face provider review queues, security audits, partner programs and paid tiers, and Composio's guides stop at "Ready to Submit".
 
-Clearance tells a developer, for any app:
+Clearance first answers the question most developers actually have: **can I just use Composio's app?** Then, for their own app, it tells them:
 - **How hard it is**: Self-serve, Review, Gated or Blocked.
 - **How long**: when they can build, and when real users can connect.
 - **What blocks them**: the #1 blocker.
@@ -13,13 +13,14 @@ Clearance tells a developer, for any app:
 For that step it either **does it**, **prepares it**, or says **only you can**. Every fact carries how we know it.
 
 ## Try it
+- Open `/g/github`: Composio's app is available now, so the next step is a connect-and-check script. Switch to "Your own app" for the approval plan.
 - Open a reviewed guide, for example `/g/gmail`. Switch "send" and "read" and watch the verdict move from Review (about 10 working days) to Gated (30 or more, plus a security audit).
 - Tick what you already have, or mark steps done. The tracker, the next step and the clocks follow you, and the URL keeps your state so it can be shared.
 - On `/g/slack`, type an app name and get a Slack app creation page pre-filled with scopes and Composio's redirect.
 - On `/g/github`, a GitHub App manifest form does the same. GitHub sends you back with the step done; the code it returns is stripped from the URL before the page renders and is never exchanged.
 - Paste an OAuth error into **Got an error?**
 - Type an app we haven't reviewed (Notion, Calendly…) and the agents research it live.
-- Agents can read the same answer as JSON: `GET /api/guides/gmail?t.uses=send&done=create_project`.
+- Agents can read the same answer as JSON: `GET /api/guides/gmail?t.uses=send&lane=own&done=create_project`. The `decision` object is typed (`lane`, `ownApp.status`, blockers with evidence ids, `connection: "unknown"`) and marks progress as user-reported.
 
 ## Key decisions
 
@@ -34,23 +35,24 @@ For that step it either **does it**, **prepares it**, or says **only you can**. 
 **2. Evidence is the product.**
 - Each claim is labelled Tested, Official, Reported, Conflicting or Unknown, with its source.
 - The label is set by code, never by a model:
-  - **Official** needs a page a web tool actually fetched, on the provider's own host.
-  - A page seen only in search results counts as **Reported**.
+  - **Official** needs the claim's quote found word for word on a page a web tool fetched from the provider's own host.
+  - A fetched page whose text doesn't contain the quote, or a third-party page, counts as **Reported**. A page seen only in search results never counts as Official.
   - No source means **Unknown**.
-- A wait whose evidence fails verification becomes "unknown". It then gets a **what to ask, and whom** line.
+- A number (a wait, an acquire time) survives only if a cited claim's quote matched word for word; otherwise it becomes "unknown" with a **what to ask, and whom** line.
+- A researched guide must also pass structural checks before it's saved: valid references, no dependency loops in any combination, and a sourced claim that the provider offers OAuth. Without that claim, "Can this be built?" says unknown.
 - `/corrections` lists facts we got wrong at first, such as DocuSign's retired 20-call rule and Slack's install count moving from 5 to 10.
 
 **3. Honest about what a guide can't know.**
 - "Can this user connect right now?" and "Can the agent do this action?" need the developer's own Composio account, so the page always says "unknown" for them.
-- The Composio setup script closes that loop on the developer's machine: it creates the auth config, prints a connect link, and waits until the account is ACTIVE.
+- The setup scripts close that loop on the developer's machine. One script uses Composio's managed app; the other uses your own app and sets the redirect URI it tells you to register. Each creates the auth config, prints a connect link, waits for ACTIVE, then runs one read-only tool, because ACTIVE alone doesn't prove a tool works.
 - No secret ever reaches our server.
 
 **4. Agents do only what providers allow, and say so.**
 
 | App | Agent does it | Agent prepares it | Only you |
 |---|---|---|---|
-| Slack | Pre-filled manifest link | | |
-| GitHub | Manifest form | | |
+| Slack | Pre-filled manifest link with the scopes you choose; you click Create | | |
+| GitHub | Manifest form with minimal permissions; you click Create | | |
 | Gmail | | Limited Use statement, scope justifications | Console clicks: Google has no public API to create these OAuth clients |
 | Gusto | | Pre-approval email | |
 | DocuSign, Xero | | | Login, payment, legal, submit |
@@ -74,9 +76,10 @@ Every call is priced. The live log shows the cost of each step and the total, so
 
 **6. Guardrails.**
 - 3 researches per IP per hour, and 20 site checks per IP per hour.
-- A daily spend cap (`DAILY_BUDGET_USD`, default $10).
+- A daily spend cap (`DAILY_BUDGET_USD`, default $10). Each run reserves $0.75 when it starts, so parallel starts can't all slip under the cap.
+- One run per app at a time (an atomic lease in Redis). A run still "running" after 6 minutes is treated as failed and can be retried.
 - A 240-second run deadline (the route allows 300 s).
-- User-supplied URLs are fetched only over HTTPS, with DNS checked against private, loopback, link-local and metadata ranges. Every redirect is re-checked, with size and time caps.
+- User-supplied URLs are fetched only over HTTPS, with DNS checked against private, loopback, link-local and metadata ranges. The request then connects to the address we checked, so a second DNS answer can't redirect it. Every redirect is re-checked, with size and time caps.
 
 ## Setup
 ```bash
@@ -107,7 +110,6 @@ Stack: Next.js 16 (App Router), TypeScript, Zod, Vitest, `@anthropic-ai/sdk`, Up
 - **The error decoder** knows a short list of common errors and says so when it doesn't recognise one.
 - **Slugs:** generated slugs use our naming, which may differ from Composio's toolkit slug. The setup script notes this.
 - **Shortcuts are marked in code with `shortcut:`**:
-  - DNS rebinding isn't prevented between our check and the fetch.
   - The spend cap can be overshot by one running job.
   - Apex domains use a two-label rule, which is wrong for `co.uk`-style domains.
 - **Not built yet:**

@@ -49,3 +49,8 @@ export async function kvSetNx(key: string, value: unknown, ttlSec: number): Prom
   mem.set(key, { v, exp: Date.now() + ttlSec * 1000 });
   return true;
 }
+
+export async function kvDel(key: string): Promise<void> {
+  if (URL_) await redis(["DEL", key]);
+  else mem.delete(key);
+}

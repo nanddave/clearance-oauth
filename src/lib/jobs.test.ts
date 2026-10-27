@@ -38,6 +38,9 @@ describe("leases and stale runs", () => {
     const { claimRun } = await import("./jobs");
     expect(await claimRun("lease-x")).toBe(true);
     expect(await claimRun("lease-x")).toBe(false);
+    const { releaseRun } = await import("./jobs");
+    await releaseRun("lease-x");
+    expect(await claimRun("lease-x")).toBe(true); // a retry after the run ended
   });
 
   it("a run that has been 'running' too long reads as failed, so it can be retried", async () => {

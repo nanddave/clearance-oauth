@@ -1,6 +1,6 @@
 import { runGeneration } from "../agents/pipeline";
 import type { AgentEvent, AgentImpls } from "../agents/types";
-import { kvGet, kvSet, kvSetNx } from "./kv";
+import { kvDel, kvGet, kvSet, kvSetNx } from "./kv";
 import type { Guide } from "./schema";
 
 export type Job = { status: "running" | "done" | "failed"; events: AgentEvent[]; guide?: Guide; query?: string; startedAt?: number };
@@ -23,6 +23,8 @@ export const isReusable = (job: Job | undefined): job is Job => !!job && (job.st
 
 /** Only one research run per app at a time, across instances. */
 export const claimRun = (slug: string) => kvSetNx(`lease:${slug}`, 1, Math.ceil(STALE_MS / 1000));
+/** Released when a run ends, so a retry after a failure can start at once; the TTL covers runs that die. */
+export const releaseRun = (slug: string) => kvDel(`lease:${slug}`);
 
 /**
  * Saves the running job, then returns the pipeline promise (never rejects).

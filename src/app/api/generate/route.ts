@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { toSlug } from "@/agents/slug";
 import { getGuide } from "@/lib/guides";
-import { claimRun, getJob, isReusable, startJob } from "@/lib/jobs";
+import { claimRun, getJob, isReusable, releaseRun, startJob } from "@/lib/jobs";
 import { addSpend, clientIp, overBudget, rateLimit, RUN_RESERVE_USD } from "@/lib/limits";
 
 export const maxDuration = 300; // research runs in after(), inside this limit
@@ -23,6 +23,6 @@ export async function POST(req: Request) {
   if (!(await claimRun(slug))) return Response.json({ slug, status: "running" }); // someone else just started it
   await addSpend(RUN_RESERVE_USD); // reserve now so parallel starts see it; the run's real costs are added as they happen
   const run = await startJob(slug, body.data.query);
-  after(() => run().finally(() => addSpend(-RUN_RESERVE_USD)));
+  after(() => run().finally(() => Promise.all([addSpend(-RUN_RESERVE_USD), releaseRun(slug)])));
   return Response.json({ slug, status: "running" });
 }
