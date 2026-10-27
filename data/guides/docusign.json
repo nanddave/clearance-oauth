@@ -1,0 +1,225 @@
+{
+  "updatedAt": "2026-10-27",
+  "origin": "reviewed",
+  "slug": "docusign",
+  "name": "DocuSign",
+  "website": "https://developers.docusign.com",
+  "composio": {
+    "managed": false,
+    "guideUrl": "https://composio.dev/auth/docusign"
+  },
+  "summary": "Private integrations go live from Apps & Keys with an instant decision or a review typically within 48 hours, but you need a paid production account. Public integrations also need the Partner Program.",
+  "toggles": [
+    {
+      "id": "integration",
+      "label": "Who will use the integration?",
+      "options": [
+        {
+          "id": "private",
+          "label": "My own account(s)"
+        },
+        {
+          "id": "public",
+          "label": "Public, for other DocuSign customers"
+        }
+      ],
+      "default": "private"
+    }
+  ],
+  "gates": [
+    {
+      "id": "dev_account",
+      "title": "Create a developer account",
+      "phase": "dev",
+      "kind": "setup",
+      "owner": "you",
+      "effortHours": [
+        0.5,
+        1
+      ],
+      "waitDays": [
+        0,
+        0
+      ],
+      "dependsOn": [],
+      "requires": [],
+      "blockers": [],
+      "agentCan": "draft",
+      "claimIds": []
+    },
+    {
+      "id": "integration_key",
+      "title": "Create an integration key and redirect URIs",
+      "phase": "dev",
+      "kind": "setup",
+      "owner": "you",
+      "effortHours": [
+        0.5,
+        1
+      ],
+      "waitDays": [
+        0,
+        0
+      ],
+      "dependsOn": [
+        "dev_account"
+      ],
+      "requires": [],
+      "blockers": [],
+      "agentCan": "draft",
+      "claimIds": []
+    },
+    {
+      "id": "go_live",
+      "title": "Go-Live review in Apps & Keys",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        1,
+        2
+      ],
+      "waitDays": [
+        0,
+        2
+      ],
+      "dependsOn": [
+        "integration_key"
+      ],
+      "requires": [
+        "paid_account"
+      ],
+      "blockers": [
+        {
+          "symptom": "Production secret and redirect URIs are missing after Go-Live",
+          "fix": "Re-create them in the production account; they are not copied over."
+        },
+        {
+          "symptom": "Wrong integration type chosen",
+          "fix": "It can't be changed once in review; withdraw and restart."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "d_golive",
+        "d_no20",
+        "d_account",
+        "d_prodsecret"
+      ]
+    },
+    {
+      "id": "partner",
+      "title": "DocuSign Partner Program membership",
+      "phase": "production",
+      "kind": "partner",
+      "owner": "provider",
+      "effortHours": [
+        4,
+        16
+      ],
+      "waitDays": "unknown",
+      "dependsOn": [
+        "integration_key"
+      ],
+      "requires": [],
+      "blockers": [],
+      "agentCan": "none",
+      "claimIds": [
+        "d_partner"
+      ],
+      "appliesWhen": {
+        "integration": [
+          "public"
+        ]
+      }
+    }
+  ],
+  "requirements": [
+    {
+      "id": "paid_account",
+      "label": "Paid production account with admin/developer access",
+      "howToGet": [
+        "Buy or get access to a paid DocuSign production account",
+        "Have an admin or developer on it"
+      ],
+      "acquireDays": [
+        0,
+        1
+      ],
+      "acquireEffortHours": [
+        1,
+        2
+      ],
+      "dependsOn": [],
+      "check": {
+        "kind": "self"
+      },
+      "claimIds": [
+        "d_account"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "d_no20",
+      "text": "The 20-API-call Go-Live requirement has been eliminated.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://developers.docusign.com/html/newsletter/202511.html",
+          "quote": "\"eliminates the requirement to make 20 API calls\" (newsletter Nov 3 2025)",
+          "checkedAt": "2026-10-27"
+        },
+        {
+          "url": "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623",
+          "quote": "community announcement Oct 3 2025",
+          "checkedAt": "2026-10-27"
+        }
+      ],
+      "note": "Older threads still cite 20 calls; they are superseded."
+    },
+    {
+      "id": "d_golive",
+      "text": "You pick an integration type and a production account in Apps & Keys and get Approved instantly, Needs review or Not allowed; reviews are typically completed within 48 hours or less.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623",
+          "quote": "Reviews \"typically completed within 48 hours or less\".",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "d_account",
+      "text": "Go-Live needs a paid production account with admin/developer access.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://community.docusign.com/go-live-70/no-more-20-api-calls-introducing-the-streamlined-integration-go-live-experience-in-apps-keys-25623",
+          "quote": "Needs a paid production account with admin/developer access.",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "d_partner",
+      "text": "Public integrations need Partner Program membership; embedded needs a special license. No timeline found.",
+      "status": "unknown",
+      "sources": [],
+      "note": "Membership is required per DocuSign; its duration was not found."
+    },
+    {
+      "id": "d_prodsecret",
+      "text": "After Go-Live, secrets and redirect URIs are not copied to production.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://developers.docusign.com/docs/esign-rest-api/go-live/",
+          "quote": "After Go-Live, secrets and redirect URIs are not copied to production.",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    }
+  ]
+}

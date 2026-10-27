@@ -1,0 +1,220 @@
+{
+  "updatedAt": "2026-10-27",
+  "origin": "reviewed",
+  "slug": "slack",
+  "name": "Slack",
+  "website": "https://docs.slack.dev",
+  "composio": {
+    "managed": true,
+    "guideUrl": "https://composio.dev/auth/slack"
+  },
+  "summary": "Listing in the Slack Marketplace needs 10 active installs first, then a review that can take up to about 12 weeks. Unlisted commercial apps are rate-limited to 1 history request a minute.",
+  "toggles": [
+    {
+      "id": "distribution",
+      "label": "How will you distribute it?",
+      "options": [
+        {
+          "id": "internal",
+          "label": "Own workspace / not listed"
+        },
+        {
+          "id": "marketplace",
+          "label": "Slack Marketplace"
+        }
+      ],
+      "default": "marketplace"
+    }
+  ],
+  "gates": [
+    {
+      "id": "create_app",
+      "title": "Create a Slack app",
+      "phase": "dev",
+      "kind": "setup",
+      "owner": "you",
+      "effortHours": [
+        0.5,
+        1
+      ],
+      "waitDays": [
+        0,
+        0
+      ],
+      "dependsOn": [],
+      "requires": [],
+      "blockers": [],
+      "agentCan": "draft",
+      "claimIds": []
+    },
+    {
+      "id": "nonmarketplace_limits",
+      "title": "Live with non-Marketplace rate limits",
+      "phase": "production",
+      "kind": "commercial",
+      "owner": "you",
+      "effortHours": [
+        0,
+        0
+      ],
+      "waitDays": [
+        0,
+        0
+      ],
+      "dependsOn": [],
+      "requires": [],
+      "blockers": [
+        {
+          "symptom": "conversations.history returns 1 request/minute and at most 15 messages",
+          "fix": "List in the Marketplace, or design around infrequent history reads."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "s_rate"
+      ],
+      "appliesWhen": {
+        "distribution": [
+          "internal"
+        ]
+      }
+    },
+    {
+      "id": "preliminary",
+      "title": "Marketplace preliminary review",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        4,
+        8
+      ],
+      "waitDays": [
+        0,
+        10
+      ],
+      "dependsOn": [
+        "create_app"
+      ],
+      "requires": [
+        "installs10"
+      ],
+      "blockers": [
+        {
+          "symptom": "Resubmitted during preliminary review",
+          "fix": "Don't; resubmitting resets your place in the queue."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "s_review"
+      ],
+      "appliesWhen": {
+        "distribution": [
+          "marketplace"
+        ]
+      }
+    },
+    {
+      "id": "functional",
+      "title": "Marketplace functional review",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        2,
+        6
+      ],
+      "waitDays": [
+        0,
+        50
+      ],
+      "dependsOn": [
+        "preliminary"
+      ],
+      "requires": [],
+      "blockers": [
+        {
+          "symptom": "Heavier review for search:read, admin.*, identity.* or legacy scopes",
+          "fix": "Request only the scopes you need."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "s_review"
+      ],
+      "appliesWhen": {
+        "distribution": [
+          "marketplace"
+        ]
+      }
+    }
+  ],
+  "requirements": [
+    {
+      "id": "installs10",
+      "label": "10 active workspace installs",
+      "howToGet": [
+        "Share the unlisted app with real workspaces",
+        "Keep them active through the whole review"
+      ],
+      "acquireDays": "unknown",
+      "acquireEffortHours": [
+        4,
+        20
+      ],
+      "dependsOn": [],
+      "check": {
+        "kind": "self"
+      },
+      "claimIds": [
+        "s_installs"
+      ],
+      "appliesWhen": {
+        "distribution": [
+          "marketplace"
+        ]
+      }
+    }
+  ],
+  "claims": [
+    {
+      "id": "s_installs",
+      "text": "Marketplace listing requires 10 active workspace installs (since Jul 2026), maintained during review.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://docs.slack.dev/changelog/2026/09/01/slack-marketplace-install-requirement",
+          "quote": "Marketplace requires **10** active-workspace installs since Jul 2026, maintained during review",
+          "checkedAt": "2026-10-27"
+        }
+      ],
+      "note": "Older sources saying 5 are stale."
+    },
+    {
+      "id": "s_review",
+      "text": "Preliminary review takes up to 10 business days; functional review up to 10 weeks for new apps (6 weeks for updates). No expedite.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+          "quote": "Preliminary review ≤10 business days; functional ≤10 weeks (new), ≤6 weeks (updates); no expedite",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "s_rate",
+      "text": "Non-Marketplace commercial apps get 1 request/minute on conversations.history and .replies, with limit max 15.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps",
+          "quote": "`conversations.history`/`.replies` → 1 req/min, limit max 15 (May 29 2025)",
+          "checkedAt": "2026-10-27"
+        }
+      ],
+      "note": "Whether existing installs are affected is a conflicting question."
+    }
+  ]
+}

@@ -1,0 +1,468 @@
+{
+  "updatedAt": "2026-10-27",
+  "origin": "reviewed",
+  "slug": "gmail",
+  "name": "Gmail",
+  "website": "https://developers.google.com/workspace/gmail",
+  "composio": {
+    "managed": true
+  },
+  "summary": "Sending mail needs Google's sensitive-scope check (days to two weeks); reading mail needs restricted-scope verification plus an annual security assessment (weeks to months). Internal Workspace apps skip both.",
+  "toggles": [
+    {
+      "id": "uses",
+      "label": "What does your app do with Gmail?",
+      "options": [
+        {
+          "id": "send",
+          "label": "Send only"
+        },
+        {
+          "id": "read",
+          "label": "Read (inbox, messages)"
+        }
+      ],
+      "default": "read"
+    },
+    {
+      "id": "audience",
+      "label": "Who will use it?",
+      "options": [
+        {
+          "id": "internal",
+          "label": "Only my Workspace org"
+        },
+        {
+          "id": "external",
+          "label": "Anyone with a Google account"
+        }
+      ],
+      "default": "external"
+    }
+  ],
+  "gates": [
+    {
+      "id": "create_project",
+      "title": "Create a Google Cloud project and OAuth client",
+      "phase": "dev",
+      "kind": "setup",
+      "owner": "you",
+      "effortHours": [
+        1,
+        2
+      ],
+      "waitDays": [
+        0,
+        0
+      ],
+      "dependsOn": [],
+      "requires": [],
+      "blockers": [
+        {
+          "symptom": "Users beyond the 100th are refused on an unverified app",
+          "fix": "Finish verification before launch; the cap cannot be reset."
+        }
+      ],
+      "agentCan": "draft",
+      "claimIds": [
+        "g_cap"
+      ]
+    },
+    {
+      "id": "brand",
+      "title": "Brand verification",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        1,
+        2
+      ],
+      "waitDays": [
+        2,
+        3
+      ],
+      "dependsOn": [
+        "create_project"
+      ],
+      "requires": [
+        "homepage",
+        "privacy_policy",
+        "support_email"
+      ],
+      "blockers": [
+        {
+          "symptom": "Brand verification rejected",
+          "fix": "Make the homepage and privacy policy match the app name on the consent screen, on a domain you own."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "g_brand"
+      ],
+      "appliesWhen": {
+        "audience": [
+          "external"
+        ]
+      }
+    },
+    {
+      "id": "sensitive",
+      "title": "Sensitive scope verification (gmail.send)",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        2,
+        6
+      ],
+      "waitDays": [
+        3,
+        10
+      ],
+      "dependsOn": [
+        "brand"
+      ],
+      "requires": [
+        "demo_video"
+      ],
+      "blockers": [
+        {
+          "symptom": "Google asks for more scope justification",
+          "fix": "Reply with a demo video and a specific explanation for each scope."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "g_scopes",
+        "g_sensitive"
+      ],
+      "appliesWhen": {
+        "audience": [
+          "external"
+        ],
+        "uses": [
+          "send"
+        ]
+      }
+    },
+    {
+      "id": "restricted",
+      "title": "Restricted scope verification (read scopes)",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        4,
+        12
+      ],
+      "waitDays": [
+        30,
+        60
+      ],
+      "dependsOn": [
+        "brand",
+        "casa"
+      ],
+      "requires": [
+        "limited_use",
+        "demo_video",
+        "casa_lov"
+      ],
+      "blockers": [
+        {
+          "symptom": "Verification stalls while Google reviews",
+          "fix": "Start CASA and the demo video on day 1; Google states it might require several months."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "g_scopes",
+        "g_restricted"
+      ],
+      "appliesWhen": {
+        "audience": [
+          "external"
+        ],
+        "uses": [
+          "read"
+        ]
+      }
+    },
+    {
+      "id": "casa",
+      "title": "CASA security assessment",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        8,
+        40
+      ],
+      "waitDays": "unknown",
+      "dependsOn": [],
+      "requires": [],
+      "blockers": [
+        {
+          "symptom": "Assessment cost is not published",
+          "fix": "Get quotes from an empanelled assessor; a vendor estimate is ~$3k–15k (reported)."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "g_casa",
+        "g_casa_cost"
+      ],
+      "appliesWhen": {
+        "audience": [
+          "external"
+        ],
+        "uses": [
+          "read"
+        ]
+      },
+      "startDay1": true
+    }
+  ],
+  "requirements": [
+    {
+      "id": "homepage",
+      "label": "Own domain with a homepage that loads over HTTPS",
+      "howToGet": [
+        "Register a domain you own",
+        "Publish a homepage describing the app"
+      ],
+      "acquireDays": [
+        0,
+        1
+      ],
+      "acquireEffortHours": [
+        1,
+        4
+      ],
+      "dependsOn": [],
+      "check": {
+        "kind": "auto",
+        "rule": {
+          "type": "homepage_loads"
+        }
+      },
+      "claimIds": []
+    },
+    {
+      "id": "privacy_policy",
+      "label": "Privacy policy on your domain",
+      "howToGet": [
+        "Publish a privacy policy that covers Google user data, linked from the homepage"
+      ],
+      "acquireDays": [
+        0,
+        1
+      ],
+      "acquireEffortHours": [
+        1,
+        4
+      ],
+      "dependsOn": [
+        "homepage"
+      ],
+      "check": {
+        "kind": "auto",
+        "rule": {
+          "type": "privacy_policy_found"
+        }
+      },
+      "claimIds": []
+    },
+    {
+      "id": "limited_use",
+      "label": "Limited Use disclosure in the privacy policy",
+      "howToGet": [],
+      "acquireDays": [
+        0,
+        1
+      ],
+      "acquireEffortHours": [
+        1,
+        4
+      ],
+      "dependsOn": [
+        "privacy_policy"
+      ],
+      "check": {
+        "kind": "auto",
+        "rule": {
+          "type": "phrase_present",
+          "page": "privacy",
+          "anyOf": [
+            "Limited Use"
+          ]
+        }
+      },
+      "claimIds": [],
+      "appliesWhen": {
+        "uses": [
+          "read"
+        ]
+      }
+    },
+    {
+      "id": "support_email",
+      "label": "Support email on your domain",
+      "howToGet": [],
+      "acquireDays": [
+        0,
+        1
+      ],
+      "acquireEffortHours": [
+        1,
+        4
+      ],
+      "dependsOn": [
+        "homepage"
+      ],
+      "check": {
+        "kind": "auto",
+        "rule": {
+          "type": "support_email_on_domain"
+        }
+      },
+      "claimIds": []
+    },
+    {
+      "id": "casa_lov",
+      "label": "CASA Letter of Validation",
+      "howToGet": [
+        "Choose an empanelled assessor",
+        "Complete the assessment and remediate findings",
+        "Re-test every year"
+      ],
+      "acquireDays": "unknown",
+      "acquireEffortHours": [
+        8,
+        40
+      ],
+      "dependsOn": [],
+      "check": {
+        "kind": "self"
+      },
+      "claimIds": [
+        "g_casa",
+        "g_casa_cost"
+      ],
+      "appliesWhen": {
+        "uses": [
+          "read"
+        ]
+      }
+    },
+    {
+      "id": "demo_video",
+      "label": "Demo video of the OAuth flow and scope use",
+      "howToGet": [
+        "Record the consent screen and each scope being used in the app"
+      ],
+      "acquireDays": [
+        0,
+        2
+      ],
+      "acquireEffortHours": [
+        2,
+        6
+      ],
+      "dependsOn": [],
+      "check": {
+        "kind": "self"
+      },
+      "claimIds": []
+    }
+  ],
+  "claims": [
+    {
+      "id": "g_scopes",
+      "text": "gmail.send is Sensitive; gmail.readonly, gmail.modify, gmail.compose, gmail.metadata and mail.google.com/ are Restricted.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/gmail/api/auth/scopes",
+          "quote": "`gmail.send` = Sensitive; `gmail.readonly`, `gmail.modify`, `gmail.compose`, `gmail.metadata`, `mail.google.com/` = Restricted.",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "g_brand",
+      "text": "Brand verification takes 2–3 business days.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "docs/research/2026-10-27-provider-facts.md",
+          "quote": "Brand verification 2–3 business days [O]",
+          "checkedAt": "2026-10-27"
+        }
+      ],
+      "note": "The research notes record this as official without a page URL; the source shown is those notes."
+    },
+    {
+      "id": "g_sensitive",
+      "text": "Sensitive scope verification: Google's pages disagree, 10 business days vs 3–5.",
+      "status": "conflicting",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13463817",
+          "quote": "10 business days (https://support.google.com/cloud/answer/13463817)",
+          "checkedAt": "2026-10-27"
+        },
+        {
+          "url": "docs/research/2026-10-27-provider-facts.md",
+          "quote": "3–5 (production-readiness page)",
+          "checkedAt": "2026-10-27"
+        }
+      ],
+      "note": "Wait is modelled as the range 3–10 to cover both."
+    },
+    {
+      "id": "g_restricted",
+      "text": "Restricted scope verification takes about 6 weeks and might require several months.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/7454865",
+          "quote": "Restricted ≈6 weeks [O]; \"might require several months\"",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "g_casa",
+      "text": "CASA is required when restricted data passes a third-party server; empanelled assessor, AL1/AL2, annual full re-test.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13465431",
+          "quote": "CASA: required when restricted data passes a third-party server; empanelled assessor; AL1/AL2; annual full re-test.",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "g_casa_cost",
+      "text": "Google does not publish the CASA cost; a vendor estimate is ~$3k–15k.",
+      "status": "unknown",
+      "sources": [],
+      "note": "The ~$3k–15k figure is a vendor estimate (reported), not shown as a number in the plan."
+    },
+    {
+      "id": "g_cap",
+      "text": "Unverified apps are limited to 100 new users for their lifetime, and the cap cannot be reset. Internal Workspace apps are exempt.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "docs/research/2026-10-27-provider-facts.md",
+          "quote": "Unverified apps: 100 new users lifetime, cannot be reset. [O] Internal Workspace apps exempt. [O]",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    }
+  ]
+}

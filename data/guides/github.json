@@ -1,0 +1,161 @@
+{
+  "updatedAt": "2026-10-27",
+  "origin": "reviewed",
+  "slug": "github",
+  "name": "GitHub",
+  "website": "https://docs.github.com/en/apps",
+  "composio": {
+    "managed": true,
+    "guideUrl": "https://composio.dev/auth/github"
+  },
+  "summary": "No review is needed to build and use a GitHub App; org owners may need to approve installs. Only a paid Marketplace listing has requirements.",
+  "toggles": [
+    {
+      "id": "marketplace",
+      "label": "Paid Marketplace listing?",
+      "options": [
+        {
+          "id": "no",
+          "label": "No"
+        },
+        {
+          "id": "paid",
+          "label": "Yes, paid listing"
+        }
+      ],
+      "default": "no"
+    }
+  ],
+  "gates": [
+    {
+      "id": "create_app",
+      "title": "Create a GitHub App",
+      "phase": "dev",
+      "kind": "setup",
+      "owner": "you",
+      "effortHours": [
+        0.5,
+        1
+      ],
+      "waitDays": [
+        0,
+        0
+      ],
+      "dependsOn": [],
+      "requires": [],
+      "blockers": [
+        {
+          "symptom": "Install in an organisation is pending",
+          "fix": "Ask an org owner to approve it."
+        }
+      ],
+      "agentCan": "draft",
+      "claimIds": [
+        "h_apps"
+      ]
+    },
+    {
+      "id": "listing",
+      "title": "Paid Marketplace listing",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        2,
+        6
+      ],
+      "waitDays": "unknown",
+      "dependsOn": [
+        "create_app"
+      ],
+      "requires": [
+        "verified_publisher",
+        "installs"
+      ],
+      "blockers": [],
+      "agentCan": "none",
+      "claimIds": [
+        "h_listing"
+      ],
+      "appliesWhen": {
+        "marketplace": [
+          "paid"
+        ]
+      }
+    }
+  ],
+  "requirements": [
+    {
+      "id": "verified_publisher",
+      "label": "Verified publisher",
+      "howToGet": [],
+      "acquireDays": "unknown",
+      "acquireEffortHours": [
+        1,
+        4
+      ],
+      "dependsOn": [],
+      "check": {
+        "kind": "self"
+      },
+      "claimIds": [
+        "h_listing"
+      ],
+      "appliesWhen": {
+        "marketplace": [
+          "paid"
+        ]
+      }
+    },
+    {
+      "id": "installs",
+      "label": "100 installs (GitHub App) or 200 users (OAuth App)",
+      "howToGet": [
+        "Grow installs outside the Marketplace first"
+      ],
+      "acquireDays": "unknown",
+      "acquireEffortHours": [
+        4,
+        20
+      ],
+      "dependsOn": [],
+      "check": {
+        "kind": "self"
+      },
+      "claimIds": [
+        "h_listing"
+      ],
+      "appliesWhen": {
+        "marketplace": [
+          "paid"
+        ]
+      }
+    }
+  ],
+  "claims": [
+    {
+      "id": "h_apps",
+      "text": "GitHub Apps are recommended over OAuth Apps; no review is needed to create or use one outside the Marketplace, though org owners may need to approve.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/differences-between-github-apps-and-oauth-apps",
+          "quote": "No review to create/use outside Marketplace; org owners may need to approve.",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "h_listing",
+      "text": "A paid Marketplace listing needs a verified publisher and 100 installs (GitHub App) or 200 users (OAuth App). Review duration not found.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://docs.github.com/en/apps/github-marketplace/creating-apps-for-github-marketplace/requirements-for-listing-an-app",
+          "quote": "Paid Marketplace listing: verified publisher + 100 installs (GitHub App) / 200 users (OAuth App).",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    }
+  ]
+}

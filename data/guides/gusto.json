@@ -1,0 +1,143 @@
+{
+  "updatedAt": "2026-10-27",
+  "origin": "reviewed",
+  "slug": "gusto",
+  "name": "Gusto",
+  "website": "https://docs.gusto.com",
+  "composio": {
+    "managed": false
+  },
+  "summary": "The sandbox is self-serve, but production access is gated and not all applications are approved. Gusto does not publish how long it takes.",
+  "toggles": [],
+  "gates": [
+    {
+      "id": "sandbox",
+      "title": "Create a developer account and sandbox app",
+      "phase": "dev",
+      "kind": "setup",
+      "owner": "you",
+      "effortHours": [
+        0.5,
+        1
+      ],
+      "waitDays": [
+        0,
+        0
+      ],
+      "dependsOn": [],
+      "requires": [],
+      "blockers": [],
+      "agentCan": "draft",
+      "claimIds": [
+        "u_sandbox"
+      ]
+    },
+    {
+      "id": "preapproval",
+      "title": "Production Pre-Approval application (includes security review)",
+      "phase": "production",
+      "kind": "partner",
+      "owner": "provider",
+      "effortHours": [
+        4,
+        12
+      ],
+      "waitDays": "unknown",
+      "dependsOn": [
+        "sandbox"
+      ],
+      "requires": [],
+      "blockers": [
+        {
+          "symptom": "Application not approved",
+          "fix": "Production access is gated; ask Gusto what is missing before reapplying."
+        }
+      ],
+      "agentCan": "none",
+      "claimIds": [
+        "u_gated",
+        "u_duration"
+      ]
+    },
+    {
+      "id": "checklist",
+      "title": "Send the Partner Checklist to developer@gusto.com",
+      "phase": "production",
+      "kind": "setup",
+      "owner": "you",
+      "effortHours": [
+        4,
+        12
+      ],
+      "waitDays": [
+        0,
+        0
+      ],
+      "dependsOn": [
+        "preapproval"
+      ],
+      "requires": [],
+      "blockers": [],
+      "agentCan": "none",
+      "claimIds": [
+        "u_gated"
+      ]
+    },
+    {
+      "id": "qa",
+      "title": "QA review, then production keys",
+      "phase": "production",
+      "kind": "review",
+      "owner": "provider",
+      "effortHours": [
+        2,
+        8
+      ],
+      "waitDays": "unknown",
+      "dependsOn": [
+        "checklist"
+      ],
+      "requires": [],
+      "blockers": [],
+      "agentCan": "none",
+      "claimIds": [
+        "u_gated",
+        "u_duration"
+      ]
+    }
+  ],
+  "requirements": [],
+  "claims": [
+    {
+      "id": "u_sandbox",
+      "text": "Create a developer portal account, org and app to get a client ID; the sandbox is api.gusto-demo.com only.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://docs.gusto.com/app-integrations/docs/introduction",
+          "quote": "Dev portal → org → app → client ID; sandbox api.gusto-demo.com only.",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "u_gated",
+      "text": "Production needs Pre-Approval, then the Partner Checklist, then QA review before production keys. Not all applications are approved.",
+      "status": "official",
+      "sources": [
+        {
+          "url": "https://docs.gusto.com/app-integrations/docs/introduction",
+          "quote": "\"Production access is gated, and not all applications are approved\" → Partner Checklist to developer@gusto.com → QA review → production keys.",
+          "checkedAt": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "u_duration",
+      "text": "Gusto does not publish how long approval takes. Third-party reports of the security review differ (about 1 week vs 2–4 weeks).",
+      "status": "unknown",
+      "sources": [],
+      "note": "Reported by Merge (~1 week) and Finch (2–4 weeks); not official, so not used as a number."
+    }
+  ]
+}
