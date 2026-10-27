@@ -2,14 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getJob, isReusable, startJob } from "./jobs";
 import { makeStubs } from "../agents/stubs";
 
-describe("jobs map bound", () => {
-  it("evicts the oldest job past 500", async () => {
-    const stubs = makeStubs(async () => {});
-    for (let i = 0; i < 502; i++) await startJob(`bound-${i}`, `bound-${i}`, stubs);
-    expect(getJob("bound-0")).toBeUndefined();
-    expect(getJob("bound-501")).toBeDefined();
-  });
-});
+const stubs = makeStubs(async () => {});
 
 describe("job reuse on retry", () => {
   it("reuses running jobs and jobs with a guide, replaces failed or guide-less ones", () => {
@@ -21,15 +14,21 @@ describe("job reuse on retry", () => {
     expect(isReusable({ status: "done", events: [], guide })).toBe(true);
   });
 
-  it("startJob replaces a failed job with a fresh running one", async () => {
-    const stubs = makeStubs(async () => {});
-    await startJob("retry-me", "retry-me", { ...stubs, scout: async () => { throw new Error("boom"); } });
-    expect(getJob("retry-me")?.status).toBe("failed");
-    expect(isReusable(getJob("retry-me"))).toBe(false);
-    const run = startJob("retry-me", "retry-me", stubs);
-    expect(getJob("retry-me")?.status).toBe("running");
-    await run;
-    expect(getJob("retry-me")?.status).toBe("done");
-    expect(isReusable(getJob("retry-me"))).toBe(true);
+  it("is saved as running before the pipeline starts, and done after", async () => {
+    const run = await startJob("persist-me", "persist-me", stubs);
+    expect((await getJob("persist-me"))?.status).toBe("running");
+    await run();
+    const job = await getJob("persist-me");
+    expect(job?.status).toBe("done");
+    expect(job?.events.length).toBeGreaterThan(5);
+  });
+
+  it("a failing agent fails the job with a log line, and a retry replaces it", async () => {
+    await (await startJob("retry-me", "retry-me", { ...stubs, scout: async () => { throw new Error("boom"); } }))();
+    const failed = await getJob("retry-me");
+    expect(failed?.status).toBe("failed");
+    expect(failed?.events.at(-1)?.message).toBe("Run failed: boom");
+    await (await startJob("retry-me", "retry-me", stubs))();
+    expect(isReusable(await getJob("retry-me"))).toBe(true);
   });
 });

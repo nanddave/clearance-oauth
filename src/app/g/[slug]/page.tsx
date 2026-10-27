@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { toSlug } from "@/agents/pipeline";
+import { toSlug } from "@/agents/slug";
 import { GuideView } from "@/components/GuideView";
 import { LiveLog } from "@/components/LiveLog";
 import { getGuide } from "@/lib/guides";
@@ -14,7 +14,7 @@ async function Guide({ params, searchParams }: PageProps<"/g/[slug]">) {
   if (toSlug(slug) !== slug) redirect(`/g/${toSlug(slug)}${query ? `?${query}` : ""}`);
   const guide = getGuide(slug);
   if (guide) return <GuideView key={slug} guide={guide} query={query} />;
-  const job = getJob(slug);
+  const job = await getJob(slug);
   if (job?.status === "done" && job.guide) return <GuideView key={slug} guide={job.guide} query={query} />;
   return <LiveLog key={slug} slug={slug} initial={job?.status ?? "none"} query={query} />;
 }

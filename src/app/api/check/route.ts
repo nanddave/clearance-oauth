@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getGuide } from "@/lib/guides";
+import { clientIp, rateLimit } from "@/lib/limits";
 import { checkUrl } from "@/lib/readiness/safe-fetch";
 import { runChecks } from "@/lib/readiness/checks";
 import type { AutoCheckRule } from "@/lib/schema";
@@ -11,6 +12,8 @@ export async function POST(req: Request) {
   if (!body.success) return Response.json({ error: "Invalid request body" }, { status: 400 });
   const guide = getGuide(body.data.slug);
   if (!guide) return Response.json({ error: "Unknown app" }, { status: 400 });
+  if (!(await rateLimit("check", clientIp(req), 20, 3600)))
+    return Response.json({ error: "Too many site checks this hour. Try again later." }, { status: 429 });
   const refused = await checkUrl(body.data.homepage);
   if (refused) return Response.json({ error: refused }, { status: 400 });
   const rules = guide.requirements.flatMap((r) =>

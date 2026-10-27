@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toSlug } from "@/agents/pipeline";
+import { toSlug } from "@/agents/slug";
 
 export function SearchBox({ library }: { library: { slug: string; name: string }[] }) {
   const router = useRouter();

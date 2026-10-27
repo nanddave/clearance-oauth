@@ -1,0 +1,159 @@
+import { z } from "zod";
+import { getGuide } from "../lib/guides";
+import { addSpend } from "../lib/limits";
+import { safeFetch } from "../lib/readiness/safe-fetch";
+import { GuideSchema, parseGuide, type Guide } from "../lib/schema";
+import { callClaude, extractJson, type Captured } from "./llm";
+import type { AgentImpls, Finding, Log } from "./types";
+import { isOfficial, verify } from "./verify";
+
+const RUN_DEADLINE_MS = 240_000; // Vercel Hobby functions stop at 300 s
+const HOST = /^(?=.{1,253}$)([a-z0-9-]+\.)+[a-z]{2,}$/;
+// Aggregators and integration vendors: useful leads, never the provider's own word.
+const NOT_OFFICIAL = /(^|\.)(merge\.dev|apideck\.com|nango\.dev|composio\.dev|rapidapi\.com|pipedream\.com|zapier\.com|stackoverflow\.com|reddit\.com|medium\.com)$/;
+
+const ScoutOut = z.object({ officialHosts: z.array(z.string()).max(8) });
+const ResearchOut = z.object({
+  findings: z.array(z.object({ claim: z.string().min(1).max(500), url: z.string().max(2000), quote: z.string().max(600) })).max(20),
+});
+
+const RESEARCH_SYSTEM = `You research how a developer registers their own OAuth app with one provider and gets it approved for production, so an AI agent (via Composio) can act for real users.
+Use web_search and web_fetch. Prefer the provider's own documentation. Read the pages you cite with web_fetch.
+Reply with JSON only: {"findings":[{"claim":"...","url":"...","quote":"..."}]}
+- quote: copied verbatim from the page at url, at most 300 characters.
+- State numbers (days, installs, fees, user caps) only when a page states them.
+- 4 to 10 findings. If something important cannot be found, add {"claim":"Unknown: <what is missing>","url":"","quote":""}.`;
+
+const SYNTH_SYSTEM = `You turn research findings into a Clearance guide: the gate graph a developer walks to get their own OAuth app for this provider approved for production.
+Reply with one JSON object only, matching the example's shape exactly (same keys and value types).
+Rules:
+- Use only the findings. Every claim's sources must be findings' url and quote, copied exactly, with checkedAt set to today. Never invent a URL.
+- A number (waitDays, acquireDays, installs, fees) must come from a cited claim; otherwise use "unknown".
+- Every gate has nextStep: the exact action, where to click, what to paste. Every gate or requirement with an unknown wait has whatToAsk: the question and whom to ask.
+- Status per claim: "reported", or "conflicting" when findings disagree. Code sets the final status.
+- toggles only when the use (scopes, audience, distribution) changes the gates; else [].
+- Redirect URI: tell the developer to use the redirect URI Composio shows for a custom auth config.
+- summary: two sentences, plain words, lead with the longest wait.`;
+
+/** Real agents for one run: they share the pages the web tools returned and one deadline. */
+export function makeRealAgents(): AgentImpls {
+  const captured: Captured = new Map();
+  let officialHosts: string[] = [];
+  const signal = AbortSignal.timeout(RUN_DEADLINE_MS);
+  const today = new Date().toISOString().slice(0, 10);
+
+  async function ask(log: Log, opts: Parameters<typeof callClaude>[0], done: (text: string) => string) {
+    const r = await callClaude({ ...opts, signal, captured });
+    await addSpend(r.costUsd);
+    log(done(r.text), r.costUsd);
+    return r.text;
+  }
+
+  async function research(slug: string, hosts: string[], log: Log, focus: string): Promise<Finding[]> {
+    log(`Searching ${focus}…`);
+    const before = captured.size;
+    const text = await ask(
+      log,
+      {
+        model: "claude-sonnet-5-5",
+        system: RESEARCH_SYSTEM,
+        prompt: `Provider: ${slug}\nLikely official hosts: ${hosts.join(", ") || "unknown"}\nFocus: ${focus}`,
+        maxTokens: 6000,
+        effort: "medium",
+        web: { maxUses: 4 },
+      },
+      () => `Read ${captured.size - before} new pages`,
+    );
+    const parsed = ResearchOut.safeParse(safeJson(text));
+    const findings = parsed.success ? parsed.data.findings : [];
+    log(`${findings.length} findings, ${findings.filter((f) => f.url && isOfficial(f.url, officialHosts)).length} from official hosts`);
+    return findings;
+  }
+
+  return {
+    async resolver(slug, log) {
+      const key = process.env.COMPOSIO_API_KEY;
+      if (!key) {
+        log("No Composio key configured, so coverage is unknown");
+        return { managed: "unknown" };
+      }
+      for (const s of new Set([slug.replace(/-/g, ""), slug])) {
+        const res = await fetch(`https://backend.composio.dev/api/v3.1/toolkits/${encodeURIComponent(s)}`, {
+          headers: { "x-api-key": key },
+          signal: AbortSignal.timeout(8000),
+        }).catch(() => null);
+        if (!res?.ok) continue;
+        const t = (await res.json().catch(() => ({}))) as { composio_managed_auth_schemes?: unknown };
+        const schemes = t.composio_managed_auth_schemes;
+        const managed = Array.isArray(schemes) ? schemes.length > 0 : "unknown";
+        log(`Composio toolkit '${s}': ${managed === true ? "Composio manages the OAuth app" : managed === false ? "bring your own OAuth app" : "auth details not listed"}`);
+        return { managed };
+      }
+      log("Not found in Composio's toolkit catalog");
+      return { managed: "unknown" };
+    },
+
+    async scout(slug, log) {
+      const text = await ask(
+        log,
+        {
+          model: "claude-haiku-5-5",
+          system: 'You name the hostnames a SaaS provider owns for its developer docs, API reference and help center. Reply with JSON only: {"officialHosts":["developer.example.com"]}. Up to 5. Never third-party sites. If unsure, return [].',
+          prompt: `Provider: ${slug}`,
+          maxTokens: 500,
+          effort: "low",
+        },
+        () => "Picked the provider's own docs hosts",
+      );
+      const parsed = ScoutOut.safeParse(safeJson(text));
+      officialHosts = (parsed.success ? parsed.data.officialHosts : [])
+        .map((h) => h.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, ""))
+        .filter((h) => HOST.test(h) && !NOT_OFFICIAL.test(h));
+      log(officialHosts.length ? `Official hosts: ${officialHosts.join(", ")}` : "No official hosts known; every source will count as reported");
+      return { officialHosts };
+    },
+
+    researcherSetup: (slug, hosts, log) =>
+      research(slug, hosts, log, "registering an OAuth app: developer portal, redirect URI, scopes and which are sensitive, sandbox vs production, test-user limits"),
+    researcherApproval: (slug, hosts, log) =>
+      research(slug, hosts, log, "production approval: review or verification steps and timelines, partner programs, security assessments, paid plan requirements, limits for unapproved apps, policies on AI agents"),
+
+    async prober(_slug, hosts, log) {
+      if (!hosts.length) return log("No official host to check");
+      const r = await safeFetch(`https://${hosts[0]}/`, undefined, fetch, AbortSignal.timeout(8000));
+      log("error" in r ? `${hosts[0]} not reachable: ${r.error}` : `${hosts[0]} reachable (HTTP ${r.status}); this proves the site exists, not that you can connect`);
+    },
+
+    async synthesizer({ query, slug, managed, findings }, log) {
+      const all = [...findings.setup, ...findings.approval].filter((f) => f.url);
+      const example = getGuide("docusign")!;
+      const prompt = `Today: ${today}\nApp: ${query} (slug: ${slug})\nComposio managed: ${managed}\n\nExample guide:\n${JSON.stringify(example)}\n\nFindings:\n${JSON.stringify(all)}`;
+      const text = await ask(log, { model: "claude-opus-5-5", system: SYNTH_SYSTEM, prompt, maxTokens: 16000, effort: "medium" }, () => "Built the gate graph from findings");
+      const fix = (g: Guide): Guide => ({ ...g, slug, origin: "generated", updatedAt: today, composio: { ...g.composio, managed } });
+      const first = GuideSchema.safeParse(safeJson(text));
+      if (first.success) return fix(first.data);
+      log("Guide failed validation; asking for one repair");
+      const errors = first.error.issues.slice(0, 15).map((i) => `${i.path.join(".")}: ${i.message}`).join("\n");
+      const repaired = await ask(
+        log,
+        { model: "claude-sonnet-5-5", system: "Fix the JSON so it validates. Change only what the errors name. Reply with the JSON object only.", prompt: `Errors:\n${errors}\n\nJSON:\n${text}`, maxTokens: 16000, effort: "low" },
+        () => "Repaired the guide JSON",
+      );
+      return fix(parseGuide(safeJson(repaired)));
+    },
+
+    async verifier(guide, log) {
+      const { guide: out, stats } = verify(guide, captured, officialHosts);
+      log(`Checked ${guide.claims.length} claims against ${captured.size} captured pages: ${stats.official} official, ${stats.reported} reported, ${stats.conflicting} conflicting, ${stats.unknown} unverified; ${stats.verbatim} quotes matched word for word, ${stats.droppedLinks} links dropped`);
+      return out;
+    },
+  };
+}
+
+function safeJson(text: string): unknown {
+  try {
+    return extractJson(text);
+  } catch {
+    return null;
+  }
+}

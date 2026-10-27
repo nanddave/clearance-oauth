@@ -1,25 +1,23 @@
 import type { Guide } from "../lib/schema";
 import { ROSTER } from "./roster";
+import { makeRealAgents } from "./real";
 import { makeStubs } from "./stubs";
 import type { AgentEvent, AgentId, AgentImpls } from "./types";
 
-/** "notion.so" / "https://www.notion.so/x?y" -> "notion"; "Google Calendar" -> "google-calendar". */
-export function toSlug(query: string): string {
-  let s = query.trim().toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\//, "").replace(/^www\./, "");
-  const host = s.split(/[/?#]/)[0];
-  // shortcut: second-to-last label as the name, wrong for co.uk-style TLDs; upgrade with a public-suffix list.
-  if (!/\s/.test(host) && host.includes(".")) s = host.split(".").slice(-2, -1)[0];
-  return s.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60).replace(/-+$/, "");
-}
+export { toSlug } from "./slug";
+import { toSlug } from "./slug";
+
+/** Real agents when an Anthropic key is set, stubs otherwise (local dev, tests). Built per run: they share captured pages. */
+export const makeAgents = (): AgentImpls => (process.env.ANTHROPIC_API_KEY ? makeRealAgents() : makeStubs());
 
 export async function runGeneration(
   query: string,
   emit: (e: AgentEvent) => void,
-  deps: AgentImpls = makeStubs(),
+  deps: AgentImpls = makeAgents(),
 ): Promise<Guide> {
   const slug = toSlug(query);
-  const log = (agent: AgentId) => (message: string) =>
-    emit({ agent, model: ROSTER[agent].model, message, at: Date.now() });
+  const log = (agent: AgentId) => (message: string, costUsd?: number) =>
+    emit({ agent, model: ROSTER[agent].model, message, at: Date.now(), ...(costUsd !== undefined && { costUsd }) });
 
   const { managed } = await deps.resolver(slug, log("resolver"));
   const { officialHosts } = await deps.scout(slug, log("scout"));
@@ -29,6 +27,6 @@ export async function runGeneration(
   ]);
   await deps.prober(slug, officialHosts, log("prober"));
   const guide = await deps.synthesizer({ query, slug, managed, findings: { setup, approval } }, log("synthesizer"));
-  await deps.verifier(guide, log("verifier"));
-  return { ...guide, origin: "generated" };
+  const verified = await deps.verifier(guide, log("verifier"));
+  return { ...verified, origin: "generated" };
 }

@@ -7,6 +7,8 @@ import type { AgentEvent } from "@/agents/types";
 import type { Guide } from "@/lib/schema";
 import { GuideView } from "./GuideView";
 
+const usd = (n: number) => `$${n < 0.01 ? n.toFixed(4) : n.toFixed(3)}`;
+
 type Status = "none" | "running" | "done" | "failed" | "gone";
 
 /** Unknown slug: offer generation, then stream the agents' log and render the guide when done. */
@@ -83,10 +85,16 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
             {events.map((e, i) => (
               <li key={i}>
                 <span className="font-semibold text-zinc-900">{ROSTER[e.agent]?.label ?? e.agent}</span> · {e.model} · {e.message}
+                {e.costUsd !== undefined && <span className="text-emerald-800"> · {usd(e.costUsd)}</span>}
               </li>
             ))}
             {status === "running" && <li className="text-zinc-500">waiting…</li>}
           </ol>
+          {events.some((e) => e.costUsd !== undefined) && (
+            <p className="mt-3 text-xs text-zinc-600">
+              Model and search cost so far: <span className="font-semibold tabular-nums">{usd(events.reduce((s, e) => s + (e.costUsd ?? 0), 0))}</span>
+            </p>
+          )}
         </div>
       )}
     </main>

@@ -88,6 +88,7 @@ export function makeStubs(sleep: () => Promise<void> = defaultSleep): AgentImpls
       await sleep();
       const n = guide.claims.reduce((s, c) => s + c.sources.length, 0);
       log(`Checked ${n} quotes against captured pages (stub)`);
+      return guide;
     },
   };
 }
