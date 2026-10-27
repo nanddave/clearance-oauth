@@ -95,3 +95,16 @@ describe("selection", () => {
     expect(sel("gusto").topBlocker?.id).toBe("preapproval");
   });
 });
+
+describe("next-action data", () => {
+  it("every reviewed gate has a next step, and every unknown wait says what to ask", () => {
+    for (const g of listGuides()) {
+      for (const x of g.gates) {
+        expect(x.nextStep, `${g.slug}:${x.id} nextStep`).toBeTruthy();
+        if (x.waitDays === "unknown") expect(x.whatToAsk, `${g.slug}:${x.id} whatToAsk`).toBeTruthy();
+      }
+      for (const r of g.requirements)
+        if (r.acquireDays === "unknown") expect(r.whatToAsk, `${g.slug}:${r.id} whatToAsk`).toBeTruthy();
+    }
+  });
+});

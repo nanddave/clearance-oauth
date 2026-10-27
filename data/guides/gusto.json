@@ -30,7 +30,8 @@
       "agentCan": "draft",
       "claimIds": [
         "u_sandbox"
-      ]
+      ],
+      "nextStep": "Create a developer account and an app in Gusto's developer portal; use the sandbox (api.gusto-demo.com) with the redirect URI Composio shows when you create a custom auth config."
     },
     {
       "id": "preapproval",
@@ -57,7 +58,9 @@
       "claimIds": [
         "u_gated",
         "u_duration"
-      ]
+      ],
+      "nextStep": "Submit the Production Pre-Approval application, including the security review. Not all applications are approved.",
+      "whatToAsk": "Email developer@gusto.com: \"What is the current timeline for pre-approval and the security review?\""
     },
     {
       "id": "checklist",
@@ -81,7 +84,8 @@
       "agentCan": "none",
       "claimIds": [
         "u_gated"
-      ]
+      ],
+      "nextStep": "Email the completed Partner Checklist to developer@gusto.com."
     },
     {
       "id": "qa",
@@ -103,7 +107,9 @@
       "claimIds": [
         "u_gated",
         "u_duration"
-      ]
+      ],
+      "nextStep": "Book the QA review Gusto asks for; production keys follow approval.",
+      "whatToAsk": "Ask developer@gusto.com: \"How long does QA review take before production keys are issued?\""
     }
   ],
   "requirements": [],

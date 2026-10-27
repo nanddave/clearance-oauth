@@ -5,7 +5,33 @@
   "name": "Slack",
   "website": "https://docs.slack.dev",
   "composio": {
-    "managed": true
+    "managed": true,
+    "notes": [
+      {
+        "when": {
+          "distribution": [
+            "marketplace"
+          ]
+        },
+        "text": "Composio's shared Slack app lets you start today, but a Marketplace listing must be your own app."
+      },
+      {
+        "when": {
+          "distribution": [
+            "internal"
+          ]
+        },
+        "text": "Composio's shared Slack app is enough for your own workspace."
+      },
+      {
+        "when": {
+          "distribution": [
+            "unlisted_commercial"
+          ]
+        },
+        "text": "Composio's shared Slack app lets you start today; your own unlisted app gets the reduced history rate limit below."
+      }
+    ]
   },
   "summary": "Listing in the Slack Marketplace needs 10 active installs first, then a review that can take up to about 12 weeks. Unlisted commercial apps are rate-limited to 1 history request a minute.",
   "toggles": [
@@ -48,7 +74,8 @@
       "requires": [],
       "blockers": [],
       "agentCan": "draft",
-      "claimIds": []
+      "claimIds": [],
+      "nextStep": "At api.slack.com/apps → Create New App → From a manifest, add your bot scopes and the redirect URI Composio shows when you create a custom auth config."
     },
     {
       "id": "nonmarketplace_limits",
@@ -80,7 +107,8 @@
         "distribution": [
           "unlisted_commercial"
         ]
-      }
+      },
+      "nextStep": "Design around 1 conversations.history request per minute, or plan for the Marketplace."
     },
     {
       "id": "preliminary",
@@ -116,7 +144,8 @@
         "distribution": [
           "marketplace"
         ]
-      }
+      },
+      "nextStep": "Once 10 workspaces are active, submit from your app's settings → Submit to Slack Marketplace. Don't resubmit during preliminary review — it resets the queue."
     },
     {
       "id": "functional",
@@ -150,7 +179,8 @@
         "distribution": [
           "marketplace"
         ]
-      }
+      },
+      "nextStep": "Keep the 10 installs active and answer reviewer questions; there is no expedite."
     }
   ],
   "requirements": [
@@ -177,7 +207,8 @@
         "distribution": [
           "marketplace"
         ]
-      }
+      },
+      "whatToAsk": "Ask yourself: which 10 workspaces (customers, design partners, friends) will install and keep the app active during review?"
     }
   ],
   "claims": [

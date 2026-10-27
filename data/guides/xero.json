@@ -49,7 +49,8 @@
       "requires": [],
       "blockers": [],
       "agentCan": "draft",
-      "claimIds": []
+      "claimIds": [],
+      "nextStep": "At developer.xero.com → My Apps → New app (Web app), add the redirect URI Composio shows when you create a custom auth config."
     },
     {
       "id": "subscribe",
@@ -90,7 +91,8 @@
           "le50",
           "le1000"
         ]
-      }
+      },
+      "nextStep": "Add a payment method and subscribe to the tier that covers your expected connections."
     },
     {
       "id": "terms",
@@ -119,7 +121,8 @@
       "agentCan": "none",
       "claimIds": [
         "x_terms"
-      ]
+      ],
+      "nextStep": "Read the developer terms with whoever owns legal; confirm your agent does not train on Xero data or simulate users."
     }
   ],
   "requirements": [
@@ -172,7 +175,8 @@
           "le50",
           "le1000"
         ]
-      }
+      },
+      "whatToAsk": "Ask Xero developer support: \"What exactly must my app meet to go beyond the Starter tier's connection cap?\""
     }
   ],
   "claims": [

@@ -58,6 +58,7 @@ export function makeStubs(sleep: () => Promise<void> = defaultSleep): AgentImpls
             blockers: [],
             agentCan: "none",
             claimIds: ["stub-research"],
+            nextStep: "Find the provider's developer portal and register an OAuth app.",
           },
           {
             id: "prod-review",
@@ -72,6 +73,8 @@ export function makeStubs(sleep: () => Promise<void> = defaultSleep): AgentImpls
             blockers: [],
             agentCan: "none",
             claimIds: ["stub-research"],
+            nextStep: "Check whether the provider reviews apps before production.",
+            whatToAsk: "Ask the provider's developer support: \"Do you review OAuth apps before production use, and how long does it take?\"",
           },
         ],
         requirements: [],

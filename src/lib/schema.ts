@@ -54,6 +54,8 @@ export const GateSchema = z.object({
   blockers: z.array(z.object({ symptom: z.string(), fix: z.string() })),
   agentCan: z.enum(["do", "draft", "none"]),
   claimIds: z.array(z.string()),
+  nextStep: z.string().optional(), // the exact action, shown on the next-action card
+  whatToAsk: z.string().optional(), // for unknown waits: the question and whom to ask
 });
 
 export const RequirementSchema = z.object({
@@ -69,6 +71,7 @@ export const RequirementSchema = z.object({
     z.object({ kind: z.literal("self") }),
   ]),
   claimIds: z.array(z.string()),
+  whatToAsk: z.string().optional(),
 });
 
 export const GuideSchema = z.object({
@@ -77,7 +80,12 @@ export const GuideSchema = z.object({
   website: z.string(),
   updatedAt: z.string(),
   origin: z.enum(["reviewed", "generated"]),
-  composio: z.object({ managed: z.union([z.boolean(), z.literal("unknown")]), guideUrl: z.string().optional() }),
+  composio: z.object({
+    managed: z.union([z.boolean(), z.literal("unknown")]),
+    guideUrl: z.string().optional(),
+    // the managed answer depends on what the agent does; first matching note wins
+    notes: z.array(z.object({ when: z.record(z.string(), z.array(z.string())), text: z.string() })).optional(),
+  }),
   toggles: z.array(ToggleSchema),
   gates: z.array(GateSchema),
   requirements: z.array(RequirementSchema),

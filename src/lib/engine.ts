@@ -19,7 +19,7 @@ const GATED_DAYS = 21;
 
 type Node = { key: string; min: number; max: number; unknown: boolean; preds: string[] };
 
-function applies(guide: Guide, sel: Selection, w?: Record<string, string[]>): boolean {
+export function applies(guide: Guide, sel: Selection, w?: Record<string, string[]>): boolean {
   if (!w) return true;
   return Object.entries(w).every(([tid, opts]) => {
     const chosen = sel.toggles[tid] ?? guide.toggles.find((t) => t.id === tid)?.default;

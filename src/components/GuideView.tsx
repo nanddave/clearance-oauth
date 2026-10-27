@@ -6,7 +6,9 @@ import { computePlan, type Selection } from "@/lib/engine";
 import type { Guide } from "@/lib/schema";
 import { isStub, safeHref } from "@/lib/display";
 import { parseSelection, toSearchParams } from "@/lib/selection";
+import { answers, composioNote, nextAction } from "@/lib/next";
 import { ClaimList } from "./ClaimList";
+import { AnswersTable, NextActionCard } from "./NextActionCard";
 import { FastestOrder, PathList } from "./PathList";
 import { ReadinessChecklist } from "./ReadinessChecklist";
 import { Toggles } from "./Toggles";
@@ -92,7 +94,9 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
         </div>
       )}
 
-      <VerdictCard guide={guide} plan={plan} placeholder={stub} />
+      <VerdictCard guide={guide} plan={plan} placeholder={stub} note={composioNote(guide, sel)} />
+      <AnswersTable answers={answers(guide, plan)} />
+      <NextActionCard action={nextAction(guide, plan)} />
 
       {guide.toggles.length > 0 && (
         <Section id="toggles" title="What does your agent need?" hint="Change these and the verdict updates.">
@@ -110,6 +114,12 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
 
       <Section id="order" title="Fastest order" hint="Items marked start day 1 have long lead times — begin them in parallel.">
         <FastestOrder guide={guide} plan={plan} />
+        <p className="mt-3 text-xs text-zinc-500">
+          For agents: the same plan as JSON at{" "}
+          <a href={`/api/guides/${guide.slug}${toSearchParams(sel)}`} className="font-mono underline underline-offset-2">
+            /api/guides/{guide.slug}
+          </a>
+        </p>
       </Section>
 
       <Section id="path" title="Path">

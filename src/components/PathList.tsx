@@ -67,6 +67,8 @@ export function PathList({ guide, plan }: { guide: Guide; plan: Plan }) {
               <dd className="text-zinc-900">{AGENT_CAN[g.agentCan]}</dd>
             </div>
           </dl>
+          {g.nextStep && <p className="mt-2 text-sm text-zinc-700">{g.nextStep}</p>}
+          {g.whatToAsk && <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-950">Wait unknown — {g.whatToAsk}</p>}
           {g.dependsOn.length > 0 && <p className="mt-2 text-xs text-zinc-600">After: {g.dependsOn.map(titleOf).join(", ")}</p>}
           {g.blockers.length > 0 && (
             <ul className="mt-2 space-y-1 text-xs">

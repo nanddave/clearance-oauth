@@ -28,7 +28,7 @@ export const ROSTER: Record<AgentId, RosterEntry> = {
     tools: ["web_search (capped max_uses)", "web_fetch (capped max_uses)"],
     why: "same; parallelism keeps us under the 240 s deadline",
   },
-  prober: { label: "Prober", model: "code", tools: ["GET only, official hosts only"], why: "deterministic \"Tested\" evidence" },
+  prober: { label: "Prober", model: "code", tools: ["GET only, official hosts only"], why: "confirms the auth endpoint is reachable; never marks anything \"Tested\"" },
   synthesizer: {
     label: "Synthesizer",
     model: "claude-opus-5-5",

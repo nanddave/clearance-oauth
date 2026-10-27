@@ -111,6 +111,7 @@ export function ReadinessChecklist({ guide, reqs, have, onToggle, onPass }: Prop
                           <li key={i}>{s}</li>
                         ))}
                       </ol>
+                      {r.whatToAsk && <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-950">Time unknown — {r.whatToAsk}</p>}
                       <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-zinc-600">
                         Your effort: {hoursLabel(r.acquireEffortHours)} <EstimateBadge />
                       </p>

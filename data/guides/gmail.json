@@ -5,7 +5,33 @@
   "name": "Gmail",
   "website": "https://developers.google.com/workspace/gmail",
   "composio": {
-    "managed": true
+    "managed": true,
+    "notes": [
+      {
+        "when": {
+          "audience": [
+            "internal"
+          ]
+        },
+        "text": "Composio's shared Google app works for your own Workspace users; an internal app of your own needs no Google verification either."
+      },
+      {
+        "when": {
+          "uses": [
+            "read"
+          ]
+        },
+        "text": "Composio's shared app lets you start today, and managed auth configs accept scope overrides. Whether its Google verification covers the read scopes you need is not stated in Composio's docs — confirm before launch. Your own app needs restricted-scope verification below."
+      },
+      {
+        "when": {
+          "uses": [
+            "send"
+          ]
+        },
+        "text": "Composio's shared app lets you start today; users see Composio on the consent screen. Your own branded app needs sensitive-scope verification below."
+      }
+    ]
   },
   "summary": "Sending mail needs Google's sensitive-scope check (days to two weeks); reading mail needs restricted-scope verification plus an annual security assessment (weeks to months). Internal Workspace apps skip both.",
   "toggles": [
@@ -67,7 +93,8 @@
       "claimIds": [
         "g_cap",
         "g_exempt"
-      ]
+      ],
+      "nextStep": "In Google Cloud console: create a project, enable the Gmail API, fill in Google Auth Platform → Branding, then create an OAuth client (Web application) with the redirect URI Composio shows when you create a custom auth config. Add yourself as a test user."
     },
     {
       "id": "brand",
@@ -102,7 +129,9 @@
         "audience": [
           "external"
         ]
-      }
+      },
+      "nextStep": "In Google Auth Platform → Verification Center, submit for verification once branding, homepage and privacy policy are live.",
+      "whatToAsk": "Ask Google's verification team, in your verification email thread: \"What is the current brand verification turnaround for my project?\""
     },
     {
       "id": "sensitive",
@@ -142,7 +171,8 @@
         "uses": [
           "send"
         ]
-      }
+      },
+      "nextStep": "In Verification Center, submit the gmail.send justification and demo video, then reply to Google's emails promptly."
     },
     {
       "id": "restricted",
@@ -185,7 +215,8 @@
         "uses": [
           "read"
         ]
-      }
+      },
+      "nextStep": "In Verification Center, submit the restricted-scope justification and demo video; start the CASA assessment in parallel."
     },
     {
       "id": "casa",
@@ -219,7 +250,9 @@
           "read"
         ]
       },
-      "startDay1": true
+      "startDay1": true,
+      "nextStep": "Pick an assessor from Google's CASA list and book the assessment.",
+      "whatToAsk": "Ask two CASA assessors for a quote: \"What is your current lead time and price for a Tier 2 assessment of a web app?\""
     }
   ],
   "requirements": [
@@ -358,7 +391,8 @@
         "audience": [
           "external"
         ]
-      }
+      },
+      "whatToAsk": "Ask your CASA assessor how long until the Letter of Validation is issued after testing starts."
     },
     {
       "id": "demo_video",

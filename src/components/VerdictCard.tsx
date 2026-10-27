@@ -20,8 +20,9 @@ const TIER_HINT: Record<Plan["tier"], string> = {
 // Composio verified that its own guide stops before provider approval only for these two.
 const STOPS_BEFORE_APPROVAL = new Set(["docusign", "xero"]);
 
-function Composio({ guide }: { guide: Guide }) {
+function Composio({ guide, note }: { guide: Guide; note: string | null }) {
   const { managed, guideUrl } = guide.composio;
+  if (note) return <>{note}</>;
   if (managed === true) return <>Composio manages this OAuth app — you can start today; you&apos;ll want your own app for production branding and limits.</>;
   if (managed === "unknown") return <>Composio coverage unknown.</>;
   const href = safeHref(guideUrl);
@@ -65,7 +66,7 @@ function YoursHint({ guide, plan }: { guide: Guide; plan: Plan }) {
   );
 }
 
-export function VerdictCard({ guide, plan, placeholder }: { guide: Guide; plan: Plan; placeholder: boolean }) {
+export function VerdictCard({ guide, plan, placeholder, note = null }: { guide: Guide; plan: Plan; placeholder: boolean; note?: string | null }) {
   const b = plan.topBlocker;
   return (
     <section aria-labelledby="verdict" className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
@@ -106,7 +107,7 @@ export function VerdictCard({ guide, plan, placeholder }: { guide: Guide; plan: 
         </p>
         <p>
           <span className="font-medium">Composio: </span>
-          <Composio guide={guide} />
+          <Composio guide={guide} note={note} />
         </p>
       </div>
     </section>

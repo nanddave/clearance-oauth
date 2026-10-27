@@ -45,7 +45,8 @@
       "requires": [],
       "blockers": [],
       "agentCan": "draft",
-      "claimIds": []
+      "claimIds": [],
+      "nextStep": "Create a free developer account at developers.docusign.com."
     },
     {
       "id": "integration_key",
@@ -67,7 +68,8 @@
       "requires": [],
       "blockers": [],
       "agentCan": "draft",
-      "claimIds": []
+      "claimIds": [],
+      "nextStep": "In Apps & Keys, add an app and integration key, then add the redirect URI Composio shows when you create a custom auth config. Pick private vs public now — it can't change once in review."
     },
     {
       "id": "go_live",
@@ -106,7 +108,8 @@
         "d_account",
         "d_prodsecret",
         "d_partner"
-      ]
+      ],
+      "nextStep": "In Apps & Keys, start Go-Live, choose the integration type and your paid production account. After approval, re-add secrets and redirect URIs in production — they are not copied."
     },
     {
       "id": "partner",
@@ -132,7 +135,9 @@
         "integration": [
           "public"
         ]
-      }
+      },
+      "nextStep": "Apply to the DocuSign Partner Program before submitting a public integration.",
+      "whatToAsk": "Ask DocuSign's partner team: \"What are the requirements, fee and approval time for Partner Program membership for a public integration?\""
     }
   ],
   "requirements": [
