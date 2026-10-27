@@ -5,6 +5,8 @@ import { getGuide } from "@/lib/guides";
 import { getJob, isReusable, startJob } from "@/lib/jobs";
 import { clientIp, overBudget, rateLimit } from "@/lib/limits";
 
+export const maxDuration = 300; // research runs in after(), inside this limit
+
 const Body = z.object({ query: z.string().trim().min(1).max(100) });
 
 export async function POST(req: Request) {

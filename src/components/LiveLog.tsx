@@ -18,6 +18,7 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [guide, setGuide] = useState<Guide | null>(null);
   const [error, setError] = useState("");
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     if (status !== "running" && status !== "failed") return;
@@ -41,8 +42,12 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
   }, [slug, status]);
 
   async function generate() {
+    if (starting) return; // one paid run per click
+    setStarting(true);
     setError("");
-    const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: slug }) }).catch(() => null);
+    const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: slug }) })
+      .catch(() => null)
+      .finally(() => setStarting(false));
     if (!res) return setError("Network error — could not reach the server");
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return setError(body.error ?? "Could not start research");
@@ -60,7 +65,7 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
             {status === "gone" ? "This generation is no longer available" : <>No guide for &lsquo;{slug}&rsquo; yet</>}
           </h1>
           <p className="mt-2 text-sm text-zinc-700">Our agents can research its OAuth approval process now. The result is marked as agent-generated and not human-reviewed.</p>
-          <button type="button" onClick={generate} className="mt-4 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700">
+          <button type="button" onClick={generate} disabled={starting} className="mt-4 disabled:opacity-60 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700">
             Research {slug} now
           </button>
           {error && (
@@ -75,7 +80,7 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
           {status === "failed" && (
             <div className="mt-2 text-sm text-red-800">
               <p>Generation failed or returned no guide. The log below shows how far it got.</p>
-              <button type="button" onClick={generate} className="mt-2 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-zinc-900 hover:bg-zinc-50">
+              <button type="button" onClick={generate} disabled={starting} className="mt-2 disabled:opacity-60 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-zinc-900 hover:bg-zinc-50">
                 Try again
               </button>
               {error && <p role="alert" className="mt-2">{error}</p>}

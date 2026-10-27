@@ -4,7 +4,6 @@ import { makeRealAgents } from "./real";
 import { makeStubs } from "./stubs";
 import type { AgentEvent, AgentId, AgentImpls } from "./types";
 
-export { toSlug } from "./slug";
 import { toSlug } from "./slug";
 
 /** Real agents when an Anthropic key is set, stubs otherwise (local dev, tests). Built per run: they share captured pages. */

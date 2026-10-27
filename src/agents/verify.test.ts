@@ -32,6 +32,11 @@ describe("verify", () => {
     expect(stats.droppedLinks).toBe(1);
   });
 
+  it("a provider page only listed by search, never fetched, is reported, not official", () => {
+    const { guide } = verify(base(), new Map([["https://developers.docusign.com/go-live", ""]]), ["developers.docusign.com"]);
+    expect(guide.claims.find((c) => c.id === "a")!.status).toBe("reported");
+  });
+
   it("turns a wait backed only by unverified claims into unknown, with a question", () => {
     const { guide } = verify(base(), captured, ["developers.docusign.com"]);
     const g = guide.gates.find((x) => x.id === "go_live")!;

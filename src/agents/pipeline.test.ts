@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseGuide } from "../lib/schema";
-import { runGeneration, toSlug } from "./pipeline";
+import { runGeneration } from "./pipeline";
+import { toSlug } from "./slug";
 import { GENERATION_AGENTS, ROSTER } from "./roster";
 import { makeStubs } from "./stubs";
 import type { AgentEvent } from "./types";

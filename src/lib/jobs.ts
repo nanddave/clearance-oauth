@@ -31,7 +31,8 @@ export async function startJob(slug: string, query: string, deps?: AgentImpls): 
         },
         (err) => {
           job.status = "failed";
-          job.events.push({ agent: "verifier", model: "code", message: `Run failed: ${err instanceof Error ? err.message : "unknown error"}`, at: Date.now() });
+          const last = job.events.at(-1);
+          job.events.push({ agent: last?.agent ?? "resolver", model: last?.model ?? "code", message: `Run failed: ${err instanceof Error ? err.message : "unknown error"}`, at: Date.now() });
           console.error("generation failed", slug, err);
         },
       )

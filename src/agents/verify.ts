@@ -24,7 +24,8 @@ export function isOfficial(url: string, officialHosts: string[]): boolean {
 
 /**
  * Code, not a model, decides evidence: a source survives only if a web tool really returned that URL;
- * status is official when a surviving source is on the provider's hosts, else reported; no sources → unknown.
+ * status is official when a surviving source was fetched (not just listed by search) from the provider's hosts,
+ * else reported; no sources → unknown.
  * Waits and acquire times that lose all their evidence become "unknown".
  */
 export function verify(guide: Guide, captured: Captured, officialHosts: string[]): { guide: Guide; stats: Record<string, number> } {
@@ -41,7 +42,7 @@ export function verify(guide: Guide, captured: Captured, officialHosts: string[]
       ? "unknown"
       : c.status === "conflicting"
         ? "conflicting"
-        : sources.some((s) => isOfficial(s.url, officialHosts))
+        : sources.some((s) => pages.get(normUrl(s.url)) && isOfficial(s.url, officialHosts))
           ? "official"
           : "reported";
     stats[status]++;
