@@ -21,7 +21,7 @@ export function ReadinessChecklist({ guide, reqs, have, onToggle, onPass }: Prop
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState<Record<string, CheckResult>>({});
-  const hasAuto = reqs.some((r) => r.check.kind === "auto");
+  const hasAuto = guide.origin !== "generated" && reqs.some((r) => r.check.kind === "auto"); // /api/check only knows reviewed guides
 
   async function check(e: React.FormEvent) {
     e.preventDefault();
@@ -78,7 +78,15 @@ export function ReadinessChecklist({ guide, reqs, have, onToggle, onPass }: Prop
           return (
             <li key={r.id} className="p-3">
               <div className="flex items-start gap-3">
-                <input id={`have-${r.id}`} type="checkbox" checked={on} onChange={(e) => onToggle(r.id, e.target.checked)} className="mt-1 size-4 accent-zinc-900" />
+                <input id={`have-${r.id}`} type="checkbox" checked={on} onChange={(e) => {
+                    // a manual tick or untick replaces the agent's result, so provenance stays honest
+                    setResults((prev) => {
+                      const next = { ...prev };
+                      delete next[r.id];
+                      return next;
+                    });
+                    onToggle(r.id, e.target.checked);
+                  }} className="mt-1 size-4 accent-zinc-900" />
                 <div className="min-w-0 flex-1">
                   <label htmlFor={`have-${r.id}`} className="text-sm font-medium text-zinc-900">
                     {r.label}
@@ -96,7 +104,7 @@ export function ReadinessChecklist({ guide, reqs, have, onToggle, onPass }: Prop
                     <details className="mt-1 text-sm">
                       <summary className="cursor-pointer text-xs text-zinc-700">
                         <span className="underline underline-offset-2">How to get it · {waitLabel(r.acquireDays)}</span>{" "}
-                        <NumberSource status={weakestStatus(guide, r.claimIds)} />
+                        {r.acquireDays !== "unknown" && r.acquireDays[1] > 0 && <NumberSource status={weakestStatus(guide, r.claimIds)} />}
                       </summary>
                       <ol className="mt-2 list-decimal space-y-1 pl-5 text-zinc-700">
                         {r.howToGet.map((s, i) => (

@@ -12,11 +12,14 @@ export function Day1Chip() {
 
 /** Fastest order: engine order, with long-lead requirements and authored startDay1 gates flagged. */
 export function FastestOrder({ guide, plan }: { guide: Guide; plan: Plan }) {
-  const title = (o: Plan["order"][number]) =>
-    o.kind === "gate" ? guide.gates.find((g) => g.id === o.id)?.title : `Get: ${guide.requirements.find((r) => r.id === o.id)?.label}`;
+  const title = (o: Plan["order"][number]) => {
+    if (o.kind === "gate") return guide.gates.find((g) => g.id === o.id)?.title;
+    const label = guide.requirements.find((r) => r.id === o.id)?.label;
+    return label && `Get: ${label}`;
+  };
   return (
     <ol className="list-decimal space-y-1.5 pl-6 text-sm text-zinc-800">
-      {plan.order.map((o) => {
+      {plan.order.filter((o) => title(o)).map((o) => {
         const day1 = o.startDay1 || (o.kind === "gate" && guide.gates.find((g) => g.id === o.id)?.startDay1);
         return (
           <li key={o.kind + o.id}>
@@ -56,7 +59,7 @@ export function PathList({ guide, plan }: { guide: Guide; plan: Plan }) {
             <div>
               <dt className="text-zinc-500">Provider wait</dt>
               <dd className="flex flex-wrap items-center gap-1 text-zinc-900">
-                {waitLabel(g.waitDays)} {g.waitDays !== "unknown" && g.waitDays[1] === 0 ? null : <NumberSource status={weakestStatus(guide, g.claimIds)} />}
+                {waitLabel(g.waitDays)} {g.waitDays !== "unknown" && g.waitDays[1] > 0 && <NumberSource status={weakestStatus(guide, g.claimIds)} />}
               </dd>
             </div>
             <div>

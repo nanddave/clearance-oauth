@@ -4,9 +4,9 @@ import { TIER_LABEL, clockLabel, missingImpact, planDelta, safeHref, waitLabel, 
 import { NumberSource } from "./EvidenceBadge";
 
 const TIER_STYLE: Record<Plan["tier"], string> = {
-  "self-serve": "bg-emerald-600 text-white",
+  "self-serve": "bg-emerald-700 text-white",
   review: "bg-amber-400 text-amber-950",
-  gated: "bg-orange-600 text-white",
+  gated: "bg-orange-700 text-white",
   blocked: "bg-red-700 text-white",
 };
 
@@ -60,7 +60,7 @@ function YoursHint({ guide, plan }: { guide: Guide; plan: Plan }) {
   return (
     <span data-missing={n} data-delta={d}>
       {n} missing · {missingImpact(plan.ideal, plan.yours, plan.missing)}{" "}
-      <NumberSource status={cited ? weakestStatus(guide, plan.missing.flatMap((r) => r.claimIds)) : null} />
+      {d > 0 && <NumberSource status={cited ? weakestStatus(guide, plan.missing.flatMap((r) => r.claimIds)) : null} />}
     </span>
   );
 }
@@ -98,7 +98,7 @@ export function VerdictCard({ guide, plan, placeholder }: { guide: Guide; plan: 
           <span className="font-medium">#1 blocker: </span>
           {b ? (
             <>
-              {b.title} — wait {waitLabel(b.waitDays)} <NumberSource status={weakestStatus(guide, b.claimIds)} />
+              {b.title} — wait {waitLabel(b.waitDays)} {b.waitDays !== "unknown" && <NumberSource status={weakestStatus(guide, b.claimIds)} />}
             </>
           ) : (
             "nothing — no provider wait in your path"

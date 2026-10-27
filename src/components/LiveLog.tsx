@@ -7,7 +7,7 @@ import type { AgentEvent } from "@/agents/types";
 import type { Guide } from "@/lib/schema";
 import { GuideView } from "./GuideView";
 
-type Status = "none" | "running" | "done" | "failed";
+type Status = "none" | "running" | "done" | "failed" | "gone";
 
 /** Unknown slug: offer generation, then stream the agents' log and render the guide when done. */
 export function LiveLog({ slug, initial, query }: { slug: string; initial: Status; query: string }) {
@@ -21,18 +21,22 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
     if (status !== "running") return;
     const id = setInterval(async () => {
       const res = await fetch(`/api/jobs/${encodeURIComponent(slug)}`).catch(() => null);
-      if (!res?.ok) return;
-      const job = await res.json();
-      setEvents(job.events);
+      if (!res) return; // network blip: try again next tick
+      if (res.status === 404) return setStatus("gone");
+      if (!res.ok) return;
+      const job = await res.json().catch(() => null);
+      if (!job) return;
+      setEvents(job.events ?? []);
       if (job.status === "done" && job.guide) setGuide(job.guide);
-      if (job.status !== "running") setStatus(job.status);
+      else if (job.status !== "running") setStatus("failed"); // failed, or done without a guide
     }, 1000);
     return () => clearInterval(id);
   }, [slug, status]);
 
   async function generate() {
     setError("");
-    const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: slug }) });
+    const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: slug }) }).catch(() => null);
+    if (!res) return setError("Network error — could not reach the server");
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return setError(body.error ?? "Could not start research");
     if (body.slug !== slug || body.reviewed) return router.replace(`/g/${body.slug}`);
@@ -43,9 +47,11 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
-      {status === "none" ? (
+      {status === "none" || status === "gone" ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h1 className="text-xl font-semibold text-zinc-950">No guide for &lsquo;{slug}&rsquo; yet</h1>
+          <h1 className="text-xl font-semibold text-zinc-950">
+            {status === "gone" ? "This generation is no longer available" : <>No guide for &lsquo;{slug}&rsquo; yet</>}
+          </h1>
           <p className="mt-2 text-sm text-zinc-700">Our agents can research its OAuth approval process now. The result is marked as agent-generated and not human-reviewed.</p>
           <button type="button" onClick={generate} className="mt-4 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700">
             Research {slug} now
@@ -59,7 +65,15 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
       ) : (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
           <h1 className="text-xl font-semibold text-zinc-950">{status === "failed" ? `Research for ‘${slug}’ failed` : `Researching ${slug}…`}</h1>
-          {status === "failed" && <p className="mt-2 text-sm text-red-800">Generation failed. The log below shows how far it got.</p>}
+          {status === "failed" && (
+            <div className="mt-2 text-sm text-red-800">
+              <p>Generation failed or returned no guide. The log below shows how far it got.</p>
+              <button type="button" onClick={generate} className="mt-2 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-zinc-900 hover:bg-zinc-50">
+                Try again
+              </button>
+              {error && <p role="alert" className="mt-2">{error}</p>}
+            </div>
+          )}
           <ol aria-live="polite" className="mt-4 space-y-1 font-mono text-xs text-zinc-700">
             {events.map((e, i) => (
               <li key={i}>

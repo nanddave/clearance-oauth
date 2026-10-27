@@ -10,10 +10,10 @@ async function Guide({ params, searchParams }: PageProps<"/g/[slug]">) {
   for (const [k, v] of Object.entries(await searchParams)) for (const x of [v].flat()) if (x !== undefined) sp.append(k, x);
   const query = sp.toString();
   const guide = getGuide(slug);
-  if (guide) return <GuideView guide={guide} query={query} />;
+  if (guide) return <GuideView key={slug} guide={guide} query={query} />;
   const job = getJob(slug);
-  if (job?.status === "done" && job.guide) return <GuideView guide={job.guide} query={query} />;
-  return <LiveLog slug={slug} initial={job?.status ?? "none"} query={query} />;
+  if (job?.status === "done" && job.guide) return <GuideView key={slug} guide={job.guide} query={query} />;
+  return <LiveLog key={slug} slug={slug} initial={job?.status ?? "none"} query={query} />;
 }
 
 export default function Page(props: PageProps<"/g/[slug]">) {

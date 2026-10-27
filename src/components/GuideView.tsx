@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { computePlan, type Selection } from "@/lib/engine";
 import type { Guide } from "@/lib/schema";
 import { isStub, safeHref } from "@/lib/display";
@@ -25,14 +25,19 @@ function Section({ id, title, children, hint }: { id: string; title: string; hin
 }
 
 function CopyLink() {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState("");
   return (
     <button
       type="button"
-      onClick={() => navigator.clipboard.writeText(location.href).then(() => (setCopied(true), setTimeout(() => setCopied(false), 1500)))}
+      onClick={() =>
+        navigator.clipboard
+          .writeText(location.href)
+          .then(() => setCopied("Link copied"), () => setCopied("Copy failed"))
+          .then(() => setTimeout(() => setCopied(""), 1500))
+      }
       className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-800 hover:bg-zinc-50"
     >
-      <span aria-live="polite">{copied ? "Link copied" : "Copy link to this plan"}</span>
+      <span aria-live="polite">{copied || "Copy link to this plan"}</span>
     </button>
   );
 }
@@ -47,15 +52,21 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
   const stub = isStub(guide);
   const website = safeHref(guide.website);
 
-  const update = (next: Selection) => {
-    setSel(next);
-    router.replace(pathname + toSearchParams(next), { scroll: false });
+  // Functional updates so async results (site check) never overwrite newer choices; the URL follows state.
+  const dirty = useRef(false);
+  const update = (fn: (s: Selection) => Selection) => {
+    dirty.current = true;
+    setSel(fn);
   };
-  const setHave = (ids: string[], on: boolean) => {
-    const have = new Set(sel.have);
-    ids.forEach((id) => (on ? have.add(id) : have.delete(id)));
-    update({ ...sel, have });
-  };
+  useEffect(() => {
+    if (dirty.current) router.replace(pathname + toSearchParams(sel), { scroll: false });
+  }, [sel, pathname, router]);
+  const setHave = (ids: string[], on: boolean) =>
+    update((s) => {
+      const have = new Set(s.have);
+      ids.forEach((id) => (on ? have.add(id) : have.delete(id)));
+      return { ...s, have };
+    });
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
@@ -85,7 +96,7 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
 
       {guide.toggles.length > 0 && (
         <Section id="toggles" title="What does your agent need?" hint="Change these and the verdict updates.">
-          <Toggles toggles={guide.toggles} value={sel.toggles} onChange={(id, opt) => update({ ...sel, toggles: { ...sel.toggles, [id]: opt } })} />
+          <Toggles toggles={guide.toggles} value={sel.toggles} onChange={(id, opt) => update((s) => ({ ...s, toggles: { ...s.toggles, [id]: opt } }))} />
         </Section>
       )}
 

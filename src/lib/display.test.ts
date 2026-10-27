@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockLabel, isStub, safeHref, waitLabel, weakestStatus } from "./display";
+import { clockLabel, isStub, missingImpact, planDelta, safeHref, waitLabel, weakestStatus } from "./display";
 import { getGuide } from "./guides";
 
 describe("display helpers", () => {
@@ -37,16 +37,14 @@ describe("display helpers", () => {
   });
 });
 
-describe("planDelta", async () => {
-  const { planDelta } = await import("./display");
+describe("planDelta", () => {
   it("rounds the extra known days up and never goes negative", () => {
     expect(planDelta({ min: 10.6, max: 11.6, unknown: true }, { min: 10.8, max: 14.6, unknown: true })).toBe(3);
     expect(planDelta({ min: 1, max: 2, unknown: false }, { min: 1, max: 2, unknown: false })).toBe(0);
   });
 });
 
-describe("missingImpact", async () => {
-  const { missingImpact } = await import("./display");
+describe("missingImpact", () => {
   const c = (max: number) => ({ min: 0, max, unknown: true });
   it("never reports an unknown-duration item as adding nothing", () => {
     expect(missingImpact(c(10), c(10), [{ acquireDays: "unknown" }])).toBe("adds unknown time");
