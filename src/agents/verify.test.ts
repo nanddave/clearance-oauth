@@ -69,3 +69,25 @@ describe("llm helpers", () => {
     expect(() => extractJson("no json")).toThrow();
   });
 });
+
+describe("stricter evidence", () => {
+  it("a provider page whose text doesn't contain the quote is reported, not official", () => {
+    const pages = new Map([["https://developers.docusign.com/go-live", "This page says something else entirely."]]);
+    const g = base();
+    const { guide } = verify(g, pages, ["developers.docusign.com"]);
+    expect(guide.claims.find((c) => c.id === "a")!.status).toBe("reported");
+  });
+
+  it("a wait backed only by an unmatched quote becomes unknown", () => {
+    const g = base();
+    g.gates = g.gates.map((x) => (x.id === "go_live" ? { ...x, claimIds: ["b"] } : x)); // forum quote "two days" does match...
+    g.claims.find((c) => c.id === "b")!.sources[0].quote = "a quote that is not on the page";
+    const { guide } = verify(g, new Map([["https://reddit.com/r/x", "it took two days for me"]]), ["developers.docusign.com"]);
+    expect(guide.gates.find((x) => x.id === "go_live")!.waitDays).toBe("unknown");
+  });
+
+  it("co.uk sites don't share an apex just by being .co.uk", () => {
+    expect(isOfficial("https://evil.co.uk/x", ["developer.acme.co.uk"])).toBe(false);
+    expect(isOfficial("https://help.acme.co.uk/x", ["developer.acme.co.uk"])).toBe(true);
+  });
+});

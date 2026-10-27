@@ -11,7 +11,8 @@ export async function rateLimit(bucket: string, ip: string, max: number, windowS
 
 export const addSpend = (usd: number) => kvIncr(`spend:${day()}`, usd, 2 * 86400);
 export const spentToday = async () => (await kvGet<number>(`spend:${day()}`)) ?? 0;
-// shortcut: jobs already running can overshoot the cap by one job's cost; fine at this scale.
+/** Held against the daily budget while a run is in flight (a typical run's estimated cost), released when it ends. */
+export const RUN_RESERVE_USD = 0.75;
 export const overBudget = async () => (await spentToday()) >= DAILY_BUDGET_USD;
 
 /** Client IP behind Vercel's proxy; "local" in dev. */

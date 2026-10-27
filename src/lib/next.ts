@@ -80,7 +80,10 @@ export function managedAction(guide: Guide): NextAction {
 
 /** A generated guide must show, with a verified source, that the provider offers OAuth before we say "yes". */
 export const oauthProven = (guide: Guide) =>
-  guide.origin === "reviewed" || guide.claims.some((c) => /oauth/i.test(c.text) && (c.status === "official" || c.status === "reported"));
+  guide.origin === "reviewed" ||
+  guide.claims.some(
+    (c) => /oauth/i.test(c.text) && !/\b(no|not|doesn't|does not|unknown|unclear)\b/i.test(c.text) && (c.status === "official" || c.status === "reported"),
+  );
 
 /** Composio's answer for this selection: the first matching note, else null (callers fall back to managed). */
 export function composioNote(guide: Guide, sel: Selection): string | null {
@@ -145,16 +148,15 @@ export function answers(guide: Guide, plan: Plan, sel?: Selection): Answer[] {
  * connection and action state need the developer's own Composio account, so they stay "unknown".
  */
 export function decision(guide: Guide, sel: Selection, plan: Plan) {
-  const next = sel.lane === "managed" ? managedAction(guide) : nextAction(guide, plan);
   const status =
-    plan.tier === "blocked" ? "blocked" : !oauthProven(guide) ? "unknown" : plan.order.length === 0 ? "launch_ready" : "in_progress";
+    plan.tier === "blocked" ? "blocked" : isStub(guide) || !oauthProven(guide) ? "unknown" : plan.order.length === 0 ? "launch_ready" : "in_progress";
   return {
     lane: sel.lane ?? "own",
     managedAvailable: guide.composio.managed,
     ownApp: {
       status,
       tier: plan.tier,
-      nextStepId: next?.id ?? null,
+      nextStepId: nextAction(guide, plan)?.id ?? null, // the own-app plan's step, whichever lane is chosen
       blockers: [plan.topBlocker, ...plan.unknownWaits].filter((g): g is Gate => !!g).map((g) => ({
         id: g.id,
         code: g.kind,

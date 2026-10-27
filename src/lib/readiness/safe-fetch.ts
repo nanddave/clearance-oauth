@@ -1,5 +1,7 @@
 import { lookup } from "node:dns/promises";
+import { request } from "node:https";
 import { isIP } from "node:net";
+import { Readable } from "node:stream";
 
 const MAX_REDIRECTS = 3;
 const MAX_BYTES = 1024 * 1024;
@@ -55,19 +57,60 @@ const defaultResolve: Resolver = async (host) => (await lookup(host, { all: true
 
 /** Returns an error message if the URL must not be fetched, else null. */
 export async function checkUrl(raw: string, resolve: Resolver = defaultResolve): Promise<string | null> {
+  const r = await screen(raw, resolve);
+  return "error" in r ? r.error : null;
+}
+
+/** Screens a URL and returns the public address it resolved to, so the request can be pinned to it. */
+async function screen(raw: string, resolve: Resolver): Promise<{ error: string } | { address: string }> {
   let u: URL;
-  try { u = new URL(raw); } catch { return "Not a valid URL"; }
-  if (u.protocol !== "https:") return "Only https:// URLs are allowed";
-  if (u.username || u.password) return "URLs with credentials are not allowed";
+  try { u = new URL(raw); } catch { return { error: "Not a valid URL" }; }
+  if (u.protocol !== "https:") return { error: "Only https:// URLs are allowed" };
+  if (u.username || u.password) return { error: "URLs with credentials are not allowed" };
   const host = u.hostname.replace(/^\[|\]$/g, "").toLowerCase();
-  if (host === "localhost" || host.endsWith(".localhost")) return "That address is not allowed";
+  if (host === "localhost" || host.endsWith(".localhost")) return { error: "That address is not allowed" };
   let addrs: string[];
   if (isIP(host)) addrs = [host];
   else {
-    try { addrs = await Promise.race([resolve(host), new Promise<never>((_, rej) => setTimeout(() => rej(new Error("dns timeout")), 3000).unref())]); } catch { return "Host could not be resolved"; }
+    try { addrs = await Promise.race([resolve(host), new Promise<never>((_, rej) => setTimeout(() => rej(new Error("dns timeout")), 3000).unref())]); } catch { return { error: "Host could not be resolved" }; }
   }
-  if (!addrs.length || addrs.some(isBlockedAddress)) return "That address is not allowed (private or internal)";
-  return null;
+  if (!addrs.length || addrs.some(isBlockedAddress)) return { error: "That address is not allowed (private or internal)" };
+  return { address: addrs[0] };
+}
+
+/**
+ * fetch() would resolve the host again, and a rebinding DNS server could answer with an internal address the
+ * second time. This connects to the address we already screened, keeping the hostname for TLS and Host.
+ */
+function pinnedFetch(address: string): typeof fetch {
+  return (input, init) =>
+    new Promise<Response>((resolve, reject) => {
+      const u = new URL(String(input));
+      const family = isIP(address);
+      const req = request(
+        {
+          hostname: u.hostname,
+          port: u.port || 443,
+          path: u.pathname + u.search,
+          method: "GET",
+          headers: init?.headers as Record<string, string>,
+          servername: isIP(u.hostname) ? undefined : u.hostname,
+          signal: init?.signal ?? undefined,
+          lookup: (_host, opts, cb) =>
+            (opts as { all?: boolean }).all ? (cb as unknown as (e: null, a: { address: string; family: number }[]) => void)(null, [{ address, family }]) : cb(null, address, family),
+        },
+        (res) => {
+          const headers = new Headers();
+          for (const [k, v] of Object.entries(res.headers)) if (v !== undefined) headers.set(k, Array.isArray(v) ? v.join(", ") : v);
+          const status = res.statusCode && res.statusCode >= 200 ? res.statusCode : 502;
+          const noBody = [204, 205, 304].includes(status);
+          if (noBody) res.resume();
+          resolve(new Response(noBody ? null : (Readable.toWeb(res) as ReadableStream), { status, headers }));
+        },
+      );
+      req.on("error", reject);
+      req.end();
+    });
 }
 
 async function readCapped(res: Response): Promise<string> {
@@ -85,21 +128,20 @@ async function readCapped(res: Response): Promise<string> {
   return Buffer.concat(chunks).subarray(0, MAX_BYTES).toString("utf8");
 }
 
-// shortcut: DNS rebinding between our lookup and fetch's own re-resolve is not prevented;
-// upgrade by connecting to the resolved IP via an undici dispatcher with a pinned lookup.
+/** Each hop is screened, then fetched from the screened address. `fetchImpl` is for tests only. */
 export async function safeFetch(
   url: string,
   resolve: Resolver = defaultResolve,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl?: typeof fetch,
   deadline?: AbortSignal,
 ): Promise<{ ok: boolean; status: number; finalUrl: string; html: string } | { error: string }> {
   let current = url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const refused = await checkUrl(current, resolve);
-    if (refused) return { error: refused };
+    const screened = await screen(current, resolve);
+    if ("error" in screened) return { error: screened.error };
     let res: Response;
     try {
-      res = await fetchImpl(current, {
+      res = await (fetchImpl ?? pinnedFetch(screened.address))(current, {
         redirect: "manual",
         signal: deadline ? AbortSignal.any([deadline, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000),
         headers: { "User-Agent": "ClearanceReadinessCheck/0.1", Accept: "text/html,*/*;q=0.5" },

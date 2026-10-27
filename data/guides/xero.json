@@ -50,7 +50,7 @@
       "blockers": [],
       "agentCan": "draft",
       "claimIds": [],
-      "nextStep": "At developer.xero.com → My Apps → New app (Web app), add the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback."
+      "nextStep": "At developer.xero.com \u2192 My Apps \u2192 New app (Web app), add the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback."
     },
     {
       "id": "subscribe",
@@ -189,7 +189,7 @@
       "sources": [
         {
           "url": "https://developer.xero.com/pricing",
-          "quote": "Starter 5 conns free · Core 50 A$35/mo · Plus 1,000 A$245 · Advanced 10,000 A$1,445 · Enterprise POA.",
+          "quote": "Starter 5 conns free \u00b7 Core 50 A$35/mo \u00b7 Plus 1,000 A$245 \u00b7 Advanced 10,000 A$1,445 \u00b7 Enterprise POA.",
           "checkedAt": "2026-10-27"
         }
       ]
@@ -245,7 +245,7 @@
       "sources": [
         {
           "url": "https://developer.xero.com/pricing",
-          "quote": "data obtained from Xero’s APIs may not be used to train AI/ML models",
+          "quote": "data obtained from Xero\u2019s APIs may not be used to train AI/ML models",
           "checkedAt": "2026-10-28",
           "verbatim": true
         }
@@ -253,9 +253,15 @@
     },
     {
       "id": "x_prereq",
-      "text": "Plan prerequisites: payment method from Core; App Certification from Plus; security assessment (initial and annual) from Advanced.",
+      "text": "Xero's plan table lists App Certification as a prerequisite from Plus, a security assessment (initial and annual) from Advanced, and a payment method from Core (column mapping read from the table).",
       "status": "official",
       "sources": [
+        {
+          "url": "https://developer.xero.com/pricing",
+          "quote": "App Certification",
+          "checkedAt": "2026-10-28",
+          "verbatim": true
+        },
         {
           "url": "https://developer.xero.com/pricing",
           "quote": "Security Assessment (initial and annual)",

@@ -16,16 +16,12 @@ export function SearchBox({ library }: { library: { slug: string; name: string }
     setErr("");
     if (library.some((g) => g.slug === slug)) return router.push(`/g/${slug}`);
     setBusy(true);
-    try {
-      const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: q }) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.slug) throw new Error(data.error ?? "Could not start research. Try again.");
-      router.push(`/g/${data.slug}`);
-    } catch (e) {
-      // server errors (rate limit, daily budget) are written for people, so show them as they are
-      setErr(e instanceof Error && e.message !== "Failed to fetch" ? e.message : "Couldn't reach the server. Try again.");
-      setBusy(false);
-    }
+    const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: q }) }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    if (res?.ok && data.slug) return router.push(`/g/${data.slug}`);
+    // server errors (rate limit, daily budget) are written for people, so show them as they are
+    setErr(!res ? "Couldn't reach the server. Try again." : (data.error ?? "Couldn't start research. Try again."));
+    setBusy(false);
   }
 
   return (

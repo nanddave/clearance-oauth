@@ -37,7 +37,7 @@ function SlackKit() {
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="My agent" className={input} />
       </label>
       <label className="mt-2 block text-zinc-800">
-        Bot scopes your tools need
+        Bot scopes your tools need (empty means chat:write)
         <input value={scopes} onChange={(e) => setScopes(e.target.value)} placeholder="chat:write, channels:read" className={`${input} font-mono`} />
       </label>
       <a href={slackManifestUrl(name, scopes)} target="_blank" rel="noopener noreferrer" className={`mt-2 inline-block ${primary}`}>

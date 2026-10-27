@@ -2,8 +2,8 @@ import { after } from "next/server";
 import { z } from "zod";
 import { toSlug } from "@/agents/slug";
 import { getGuide } from "@/lib/guides";
-import { getJob, isReusable, startJob } from "@/lib/jobs";
-import { clientIp, overBudget, rateLimit } from "@/lib/limits";
+import { claimRun, getJob, isReusable, startJob } from "@/lib/jobs";
+import { addSpend, clientIp, overBudget, rateLimit, RUN_RESERVE_USD } from "@/lib/limits";
 
 export const maxDuration = 300; // research runs in after(), inside this limit
 
@@ -20,7 +20,9 @@ export async function POST(req: Request) {
   if (!(await rateLimit("generate", clientIp(req), 3, 3600)))
     return Response.json({ error: "You've started 3 researches this hour. Try again later." }, { status: 429 });
   if (await overBudget()) return Response.json({ error: "Today's research budget is used up. Try again tomorrow." }, { status: 429 });
+  if (!(await claimRun(slug))) return Response.json({ slug, status: "running" }); // someone else just started it
+  await addSpend(RUN_RESERVE_USD); // reserve now so parallel starts see it; the run's real costs are added as they happen
   const run = await startJob(slug, body.data.query);
-  after(run);
+  after(() => run().finally(() => addSpend(-RUN_RESERVE_USD)));
   return Response.json({ slug, status: "running" });
 }

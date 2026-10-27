@@ -86,7 +86,7 @@ export async function runChecks(
   homepageUrl: string,
   rules: { reqId: string; rule: AutoCheckRule }[],
   resolve?: Resolver,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl?: typeof fetch, // tests only; real requests use safeFetch's pinned connection
 ): Promise<CheckResult[]> {
   const pages: Pages = { homepage: null, privacy: null };
   const signal = AbortSignal.timeout(10000); // shared deadline for the whole run

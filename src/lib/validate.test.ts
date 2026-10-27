@@ -18,9 +18,9 @@ describe("validateGuide", () => {
     expect(validateGuide(g).some((e) => e.includes("cycle"))).toBe(true);
   });
 
-  it("catches a step ordered before what it needs", () => {
+  it("reports a cycle that only exists through afterGates", () => {
     const g = structuredClone(getGuide("slack")!) as Guide;
     g.requirements.find((r) => r.id === "installs10")!.afterGates = ["preliminary"]; // installs after the review that needs them
-    expect(validateGuide(g).some((e) => e.includes("cycle") || e.includes("ordered before"))).toBe(true);
+    expect(validateGuide(g).some((e) => e.includes("cycle"))).toBe(true);
   });
 });

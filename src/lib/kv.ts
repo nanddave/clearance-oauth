@@ -40,3 +40,12 @@ export async function kvIncr(key: string, by: number, ttlSec: number): Promise<n
   mem.set(key, { v: String(n), exp: e?.exp ?? Date.now() + ttlSec * 1000 });
   return n;
 }
+
+/** Set only if absent (atomic on Redis). True when this caller got the key: a lease. */
+export async function kvSetNx(key: string, value: unknown, ttlSec: number): Promise<boolean> {
+  const v = JSON.stringify(value);
+  if (URL_) return (await redis(["SET", key, v, "NX", "EX", ttlSec])) === "OK";
+  if (live(mem.get(key))) return false;
+  mem.set(key, { v, exp: Date.now() + ttlSec * 1000 });
+  return true;
+}

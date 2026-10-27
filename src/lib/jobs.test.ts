@@ -32,3 +32,19 @@ describe("job reuse on retry", () => {
     expect(isReusable(await getJob("retry-me"))).toBe(true);
   });
 });
+
+describe("leases and stale runs", () => {
+  it("only the first claim for an app wins", async () => {
+    const { claimRun } = await import("./jobs");
+    expect(await claimRun("lease-x")).toBe(true);
+    expect(await claimRun("lease-x")).toBe(false);
+  });
+
+  it("a run that has been 'running' too long reads as failed, so it can be retried", async () => {
+    const { kvSet } = await import("./kv");
+    await kvSet("job:dead-run", { status: "running", events: [], startedAt: Date.now() - 10 * 60_000 }, 60);
+    const job = await getJob("dead-run");
+    expect(job?.status).toBe("failed");
+    expect(isReusable(job)).toBe(false);
+  });
+});

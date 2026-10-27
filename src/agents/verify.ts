@@ -4,8 +4,9 @@ import type { Captured } from "./llm";
 // Multi-tenant platforms: sharing an apex with these says nothing about who wrote the page.
 const SHARED_APEX = new Set(["github.io", "gitbook.io", "readme.io", "medium.com", "notion.site", "vercel.app", "netlify.app", "herokuapp.com", "zendesk.com", "freshdesk.com", "intercom.help", "atlassian.net"]);
 
-// shortcut: last two labels as the apex, wrong for co.uk-style suffixes; upgrade with a public-suffix list.
-const apex = (host: string) => host.split(".").slice(-2).join(".");
+// Common two-label public suffixes; shortcut: not the full public-suffix list, upgrade with one if hosts outside these appear.
+const TWO_LABEL_SUFFIX = /\.(co|com|net|org|gov|ac|edu)\.[a-z]{2}$/;
+export const apex = (host: string) => host.split(".").slice(TWO_LABEL_SUFFIX.test(host) ? -3 : -2).join(".");
 const hostOf = (url: string) => {
   try {
     return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
@@ -23,10 +24,10 @@ export function isOfficial(url: string, officialHosts: string[]): boolean {
 }
 
 /**
- * Code, not a model, decides evidence: a source survives only if a web tool really returned that URL;
- * status is official when a surviving source was fetched (not just listed by search) from the provider's hosts,
- * else reported; no sources → unknown.
- * Waits and acquire times that lose all their evidence become "unknown".
+ * Code, not a model, decides evidence: a source survives only if a web tool really returned that URL.
+ * Official = its quote was found word for word in a page fetched from the provider's own hosts;
+ * Reported = the page was fetched but the quote didn't match or the host isn't the provider's; no sources → unknown.
+ * A number (wait or acquire time) stays only if one of its cited claims has a word-for-word quote; else "unknown".
  */
 export function verify(guide: Guide, captured: Captured, officialHosts: string[]): { guide: Guide; stats: Record<string, number> } {
   const pages = new Map([...captured].map(([u, t]) => [normUrl(u), t]));
@@ -42,13 +43,14 @@ export function verify(guide: Guide, captured: Captured, officialHosts: string[]
       ? "unknown"
       : c.status === "conflicting"
         ? "conflicting"
-        : sources.some((s) => pages.get(normUrl(s.url)) && isOfficial(s.url, officialHosts))
+        : sources.some((s) => s.verbatim && isOfficial(s.url, officialHosts))
           ? "official"
           : "reported";
     stats[status]++;
     return { ...c, status, sources } as Guide["claims"][number];
   });
-  const backed = new Set(claims.filter((c) => c.status !== "unknown").map((c) => c.id));
+  // a claim backs a number only when its quote was found word for word on a fetched page
+  const backed = new Set(claims.filter((c) => c.status !== "unknown" && c.sources.some((s) => s.verbatim)).map((c) => c.id));
   const ask = "Ask the provider's developer support how long this takes today.";
   const gates = guide.gates.map((g) =>
     g.waitDays !== "unknown" && g.waitDays[1] > 0 && !g.claimIds.some((id) => backed.has(id))

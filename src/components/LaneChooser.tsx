@@ -31,9 +31,10 @@ export function LaneChooser({ guide, plan, lane, note, placeholder, onChange }: 
     <section aria-label="Choose how to connect" className="mt-4 grid gap-3 sm:grid-cols-2">
       <Card title="Composio's app" selected={lane === "managed"} disabled={m !== true} onSelect={() => onChange("managed")}>
         <span className={`mt-1 text-base font-semibold ${m === true ? "text-emerald-800" : "text-zinc-600"}`}>
-          {m === true ? "Works today" : m === false ? "Not available" : "Not confirmed"}
+          {m === true ? "Available now" : m === false ? "Not available" : "Not confirmed"}
         </span>
         <span className="mt-1 text-zinc-700">
+          {m === true && "Per Composio's managed-auth list. "}
           {note ?? (m === true ? "Composio already has an approved app; users see Composio's name." : m === false ? `Composio doesn't hold an OAuth app for ${guide.name}; you need your own.` : "We couldn't confirm Composio coverage for this app.")}
         </span>
       </Card>

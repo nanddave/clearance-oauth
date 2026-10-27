@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { computePlan } from "./engine";
 import { getGuide, listGuides } from "./guides";
 import { agentView, answers, composioNote, nextAction } from "./next";
-import { parseSelection } from "./selection";
+import { parseSelection, toSearchParams } from "./selection";
 
 const sel = (slug: string, q = "") => {
   const g = getGuide(slug)!;
@@ -78,7 +78,8 @@ describe("lanes", () => {
   it("defaults to Composio's app when it manages the OAuth, and to your own app otherwise", () => {
     expect(sel("github").s.lane).toBe("managed");
     expect(sel("github", "lane=own").s.lane).toBe("own");
-    expect(sel("docusign", "lane=managed").s.lane).toBe("own"); // no managed app to choose
+    expect(sel("docusign", "lane=managed").s.lane).toBeUndefined(); // no managed app: no lane to choose
+    expect(toSearchParams(sel("docusign").s)).not.toContain("lane");
   });
 
   it("a generated guide without a verified OAuth claim answers unknown, not yes", () => {
@@ -87,5 +88,22 @@ describe("lanes", () => {
     g.claims = g.claims.map((c) => ({ ...c, status: "unknown" as const }));
     const a = answers(g, computePlan(g, parseSelection(g, new URLSearchParams())));
     expect(a.find((x) => x.id === "build")!.answer).toBe("unknown");
+  });
+});
+
+describe("decision", () => {
+  it("own-app next step stays the own-app step even on the managed lane", () => {
+    const { g, s } = sel("gmail");
+    const v = agentView(g, s);
+    expect(v.decision.lane).toBe("managed");
+    expect(v.decision.ownApp.nextStepId).not.toBe("managed_connect");
+  });
+
+  it("a placeholder guide is never launch-ready", () => {
+    const g = structuredClone(getGuide("github")!);
+    g.origin = "generated";
+    g.claims = [{ id: "s", text: "Stub: live research not yet connected", status: "unknown", sources: [] }];
+    g.gates = [];
+    expect(agentView(g, parseSelection(g, new URLSearchParams())).decision.ownApp.status).toBe("unknown");
   });
 });

@@ -2,7 +2,8 @@ import { z } from "zod";
 import { getGuide } from "../lib/guides";
 import { addSpend } from "../lib/limits";
 import { safeFetch } from "../lib/readiness/safe-fetch";
-import { GuideSchema, parseGuide, type Guide } from "../lib/schema";
+import { GuideSchema, type Guide } from "../lib/schema";
+import { validateGuide } from "../lib/validate";
 import { callClaude, extractJson, type Captured } from "./llm";
 import type { AgentImpls, Finding, Log } from "./types";
 import { isOfficial, verify } from "./verify";
@@ -33,7 +34,9 @@ Rules:
 - Status per claim: "reported", or "conflicting" when findings disagree. Code sets the final status.
 - toggles only when the use (scopes, audience, distribution) changes the gates; else [].
 - Redirect URI: tell the developer to register https://backend.composio.dev/api/v3/toolkits/auth/callback.
-- summary: two sentences, plain words, lead with the longest wait.`;
+- summary: two sentences, plain words, lead with the longest wait.
+- Include one claim stating whether the provider offers OAuth apps to third-party developers, citing the finding that shows it. If no finding shows it, say "Unknown: no source shows OAuth support".
+- dependsOn lists gate ids only; a requirement that can only happen after a step (installs after the app exists) uses afterGates with that gate id.`;
 
 /** Real agents for one run: they share the pages the web tools returned and one deadline. */
 export function makeRealAgents(): AgentImpls {
@@ -85,8 +88,9 @@ export function makeRealAgents(): AgentImpls {
         if (!res?.ok) continue;
         const t = (await res.json().catch(() => ({}))) as { composio_managed_auth_schemes?: unknown };
         const schemes = t.composio_managed_auth_schemes;
-        const managed = Array.isArray(schemes) ? schemes.length > 0 : "unknown";
-        log(`Composio toolkit '${s}': ${managed === true ? "Composio manages the OAuth app" : managed === false ? "bring your own OAuth app" : "auth details not listed"}`);
+        // managed only if Composio holds an OAuth app; a managed API-key scheme doesn't count (managed-auth directory)
+        const managed = Array.isArray(schemes) ? schemes.some((x) => /^oauth/i.test(String(x))) : "unknown";
+        log(`Composio toolkit '${s}': managed schemes [${Array.isArray(schemes) ? schemes.join(", ") : "not listed"}], so ${managed === true ? "Composio manages the OAuth app" : managed === false ? "bring your own OAuth app" : "coverage unknown"}`);
         return { managed };
       }
       log("Not found in Composio's toolkit catalog");
@@ -120,7 +124,7 @@ export function makeRealAgents(): AgentImpls {
 
     async prober(_slug, hosts, log) {
       if (!hosts.length) return log("No official host to check");
-      const r = await safeFetch(`https://${hosts[0]}/`, undefined, fetch, AbortSignal.timeout(8000));
+      const r = await safeFetch(`https://${hosts[0]}/`, undefined, undefined, AbortSignal.timeout(8000));
       log("error" in r ? `${hosts[0]} not reachable: ${r.error}` : `${hosts[0]} reachable (HTTP ${r.status}); this proves the site exists, not that you can connect`);
     },
 
@@ -130,16 +134,24 @@ export function makeRealAgents(): AgentImpls {
       const prompt = `Today: ${today}\nApp: ${query} (slug: ${slug})\nComposio managed: ${managed}\n\nExample guide:\n${JSON.stringify(example)}\n\nFindings:\n${JSON.stringify(all)}`;
       const text = await ask(log, { model: "claude-opus-5-5", system: SYNTH_SYSTEM, prompt, maxTokens: 16000, effort: "medium" }, () => "Built the gate graph from findings");
       const fix = (g: Guide): Guide => ({ ...g, slug, origin: "generated", updatedAt: today, composio: { ...g.composio, managed } });
-      const first = GuideSchema.safeParse(safeJson(text));
-      if (first.success) return fix(first.data);
-      log("Guide failed validation; asking for one repair");
-      const errors = first.error.issues.slice(0, 15).map((i) => `${i.path.join(".")}: ${i.message}`).join("\n");
+      // shape (zod) and usability (references, cycles, possible order) must both pass; one repair, then fail loudly
+      const check = (raw: unknown): { guide?: Guide; errors: string[] } => {
+        const parsed = GuideSchema.safeParse(raw);
+        if (!parsed.success) return { errors: parsed.error.issues.slice(0, 15).map((i) => `${i.path.join(".")}: ${i.message}`) };
+        const guide = fix(parsed.data);
+        return { guide, errors: validateGuide(guide).slice(0, 15) };
+      };
+      const first = check(safeJson(text));
+      if (first.guide && !first.errors.length) return first.guide;
+      log(`Guide failed checks (${first.errors.length} problems); asking for one repair`);
       const repaired = await ask(
         log,
-        { model: "claude-sonnet-5-5", system: "Fix the JSON so it validates. Change only what the errors name. Reply with the JSON object only.", prompt: `Errors:\n${errors}\n\nJSON:\n${text}`, maxTokens: 16000, effort: "low" },
+        { model: "claude-sonnet-5-5", system: "Fix the JSON so it passes every listed check. Change only what the errors name. Reply with the JSON object only.", prompt: `Errors:\n${first.errors.join("\n")}\n\nJSON:\n${text}`, maxTokens: 16000, effort: "low" },
         () => "Repaired the guide JSON",
       );
-      return fix(parseGuide(safeJson(repaired)));
+      const second = check(safeJson(repaired));
+      if (second.guide && !second.errors.length) return second.guide;
+      throw new Error(`guide still invalid after repair: ${second.errors.slice(0, 3).join("; ")}`);
     },
 
     async verifier(guide, log) {

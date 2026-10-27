@@ -83,7 +83,7 @@ export function VerdictCard({ guide, plan, placeholder }: { guide: Guide; plan: 
         {plan.unknownWaits.length > 0 && (
           <p>
             <span className="font-medium">Also unknown: </span>
-            {plan.unknownWaits.map((g) => g.title).join(", ")}. Nobody publishes how long; see what to ask below.
+            {plan.unknownWaits.map((g) => g.title).join(", ")}. No published timeline; see what to ask below.
           </p>
         )}
 

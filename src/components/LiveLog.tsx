@@ -19,6 +19,7 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
   const [guide, setGuide] = useState<Guide | null>(null);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
+  const [jobQuery, setJobQuery] = useState<string | null>(null); // what the user originally typed, e.g. a website
 
   useEffect(() => {
     if (status !== "running" && status !== "failed") return;
@@ -30,6 +31,7 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
       const job = await res.json().catch(() => null);
       if (!job) return;
       setEvents(job.events ?? []);
+      if (typeof job.query === "string") setJobQuery(job.query);
       if (job.status === "done" && job.guide) setGuide(job.guide);
       else if (job.status !== "running") setStatus("failed"); // failed, or done without a guide
     };
@@ -45,7 +47,7 @@ export function LiveLog({ slug, initial, query }: { slug: string; initial: Statu
     if (starting) return; // one paid run per click
     setStarting(true);
     setError("");
-    const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: slug }) })
+    const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: jobQuery ?? slug }) })
       .catch(() => null)
       .finally(() => setStarting(false));
     if (!res) return setError("Network error — could not reach the server");

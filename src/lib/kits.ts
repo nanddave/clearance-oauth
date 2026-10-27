@@ -37,19 +37,29 @@ const TEST_TOOL: Record<string, string> = { gmail: "GMAIL_GET_PROFILE", github: 
 
 function connectAndCheck(guide: Guide): string {
   const tool = TEST_TOOL[guide.slug];
-  return `const request = await composio.connectedAccounts.link("test-user", authConfig.id);
+  const base = `const request = await composio.connectedAccounts.link("test-user", authConfig.id);
 console.log("Open this link and approve:", request.redirectUrl);
 const account = await request.waitForConnection(120_000);
 console.log("Connection:", account.status); // ACTIVE = this user can connect
 
 // Connection check: ACTIVE doesn't prove a tool works, so run one read-only tool.
-// ${tool ? `${tool} is our best guess; check the exact name in Composio's ${guide.name} tool list.` : `Pick a read-only GET or LIST tool from Composio's ${guide.name} tool list.`}
-const result = await composio.tools.execute(process.env.TEST_TOOL ?? "${tool ?? "REPLACE_WITH_A_READ_ONLY_TOOL"}", {
+`;
+  const run = (slug: string) => `const result = await composio.tools.execute(${slug}, {
   userId: "test-user",
   arguments: {},
   dangerouslySkipVersionCheck: true,
 });
 console.log("Tool check:", result.successful ? "OK" : \`failed: \${result.error}\`); // prints no account data
+`;
+  return tool
+    ? base + `// ${tool} is our best guess; check the exact name in Composio's ${guide.name} tool list.\n` + run(`process.env.TEST_TOOL ?? "${tool}"`)
+    : base +
+        `// We don't know a safe read-only ${guide.name} tool: set TEST_TOOL to a GET or LIST tool from Composio's tool list.
+if (process.env.TEST_TOOL) {
+${run("process.env.TEST_TOOL")
+  .split("\n")
+  .map((l) => (l ? "  " + l : l))
+  .join("\n")}} else console.log("Tool check: skipped (set TEST_TOOL to run one)");
 `;
 }
 

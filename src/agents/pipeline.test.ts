@@ -51,3 +51,10 @@ describe("toSlug", () => {
   ])("%s -> %s", (q, s) => expect(toSlug(q)).toBe(s));
   it("caps at 60 chars", () => expect(toSlug("a".repeat(80)).length).toBe(60));
 });
+
+describe("toSlug suffixes", () => {
+  it("names co.uk-style sites by their own label", () => {
+    expect(toSlug("https://www.example.co.uk/pricing")).toBe("example");
+    expect(toSlug("docs.acme.com")).toBe("acme");
+  });
+});

@@ -9,8 +9,9 @@ export function selections(guide: Guide): Selection[] {
 }
 
 /**
- * Problems that make a guide unusable even though its JSON shape is valid: broken references,
- * dependency cycles, and any combination whose fastest order puts a step before something it needs.
+ * Problems that make a guide unusable even though its JSON shape is valid: broken references and
+ * dependency cycles in any toggle combination. Whether the dependencies themselves are right (installs need
+ * the app first) is a data question the reviewed guides answer by hand, with afterGates.
  */
 export function validateGuide(guide: Guide): string[] {
   const errors: string[] = [];
@@ -40,22 +41,10 @@ export function validateGuide(guide: Guide): string[] {
 
   for (const sel of selections(guide)) {
     const label = JSON.stringify(sel.toggles);
-    let plan;
     try {
-      plan = computePlan(guide, sel);
+      computePlan(guide, sel); // throws on a dependency cycle
     } catch (e) {
       errors.push(`${label}: ${e instanceof Error ? e.message : "plan failed"}`);
-      continue;
-    }
-    const pos = new Map(plan.order.map((o, i) => [`${o.kind[0]}:${o.id}`, i]));
-    const before = (a: string, b: string) => !pos.has(a) || !pos.has(b) || pos.get(a)! < pos.get(b)!;
-    for (const g of plan.gates) {
-      for (const d of g.dependsOn) if (!before(`g:${d}`, `g:${g.id}`)) errors.push(`${label}: ${g.id} is ordered before ${d}`);
-      for (const d of g.requires) if (!before(`r:${d}`, `g:${g.id}`)) errors.push(`${label}: ${g.id} is ordered before ${d}`);
-    }
-    for (const r of plan.missing) {
-      for (const d of r.dependsOn) if (!before(`r:${d}`, `r:${r.id}`)) errors.push(`${label}: ${r.id} is ordered before ${d}`);
-      for (const d of r.afterGates ?? []) if (!before(`g:${d}`, `r:${r.id}`)) errors.push(`${label}: ${r.id} is ordered before ${d}`);
     }
   }
   return errors;
