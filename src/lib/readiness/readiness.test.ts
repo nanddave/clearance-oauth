@@ -1,10 +1,11 @@
+import type { AutoCheckRule } from "../schema";
 import { describe, it, expect } from "vitest";
 import { isBlockedAddress, checkUrl, safeFetch } from "./safe-fetch";
 import { findPrivacyLink, evaluateRule, runChecks } from "./checks";
 
 describe("isBlockedAddress", () => {
   it.each(["127.0.0.1", "::1", "10.0.0.5", "172.16.0.1", "192.168.1.1", "169.254.169.254", "fd00::1",
-    "0.0.0.0", "100.64.0.1", "::ffff:127.0.0.1", "::ffff:7f00:1", "fe80::1", "::", "garbage"])("blocks %s", (ip) => {
+    "0.0.0.0", "100.64.0.1", "::ffff:127.0.0.1", "::ffff:7f00:1", "fe80::1", "fec0::1", "::ffff:0:127.0.0.1", "::ffff:0:a00:1", "::", "garbage"])("blocks %s", (ip) => {
     expect(isBlockedAddress(ip)).toBe(true);
   });
   it.each(["8.8.8.8", "2606:4700:4700::1111", "::ffff:8.8.8.8"])("allows %s", (ip) => {
@@ -61,5 +62,25 @@ describe("pure helpers", () => {
     const pages = { homepage: page("<p>hi</p>"), privacy: null };
     expect(evaluateRule({ type: "privacy_policy_found" }, pages).status).toBe("fail");
     expect(evaluateRule({ type: "phrase_present", page: "privacy", anyOf: ["x"] }, pages).status).toBe("unsure");
+  });
+
+  const ms = (f: () => unknown) => { const t = performance.now(); f(); return performance.now() - t; };
+  const MB = 1024 * 1024;
+  const pg = (html: string) => ({ url: "https://acme.com/", status: 200, html });
+  it("email check is not ReDoS-able", () => {
+    for (const h of ["a".repeat(MB), "a@".repeat(MB / 2)])
+      expect(ms(() => evaluateRule({ type: "support_email_on_domain" }, { homepage: pg(h), privacy: null }))).toBeLessThan(500);
+  });
+  it("findPrivacyLink and text stripping are linear on adversarial input", () => {
+    expect(ms(() => findPrivacyLink('<a href="p">'.repeat(MB / 12), "https://acme.com/"))).toBeLessThan(500);
+    expect(ms(() => findPrivacyLink("<a ".repeat(MB / 3), "https://acme.com/"))).toBeLessThan(500);
+    for (const h of ["<script>".repeat(MB / 8), "<".repeat(MB), "<style>x".repeat(MB / 8)])
+      expect(ms(() => evaluateRule({ type: "phrase_present", page: "homepage", anyOf: ["x"] }, { homepage: pg(h), privacy: null }))).toBeLessThan(500);
+  });
+  it("non-2xx homepage: dependents unsure, homepage_loads fails", () => {
+    const pages = { homepage: { url: "https://acme.com/", status: 500, html: "<a href='/privacy'>privacy</a> a@acme.com" }, privacy: null };
+    expect(evaluateRule({ type: "homepage_loads" }, pages).status).toBe("fail");
+    for (const rule of [{ type: "privacy_policy_found" }, { type: "support_email_on_domain" }, { type: "phrase_present", page: "homepage", anyOf: ["x"] }] satisfies AutoCheckRule[])
+      expect(evaluateRule(rule, pages).status).toBe("unsure");
   });
 });

@@ -9,7 +9,7 @@ const stripWww = (h: string) => h.replace(/^www\./, "");
 
 export function findPrivacyLink(html: string, baseUrl: string): string | null {
   const base = new URL(baseUrl);
-  for (const m of html.matchAll(/<a\b[^>]*?href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+  for (const m of html.matchAll(/<a\b[^<>]{0,500}?href\s*=\s*["']([^"'#<>]{1,500})["'][^<>]{0,500}>([^<]{0,500}(?:<[^<]{0,500}){0,5}?)<\/a>/gi)) {
     if (!/privacy/i.test(m[1]) && !/privacy/i.test(m[2].replace(/<[^>]+>/g, ""))) continue;
     try {
       const u = new URL(m[1], base);
@@ -19,7 +19,22 @@ export function findPrivacyLink(html: string, baseUrl: string): string | null {
   return null;
 }
 
-const text = (html: string) => html.replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+// indexOf loop: regex versions are quadratic on repeated unclosed tags
+function stripBlocks(html: string): string {
+  const lower = html.toLowerCase();
+  let out = "";
+  let i = 0;
+  for (;;) {
+    const starts = ["<script", "<style"].map((t) => lower.indexOf(t, i)).filter((n) => n >= 0);
+    if (!starts.length) return out + html.slice(i);
+    const a = Math.min(...starts);
+    out += html.slice(i, a) + " ";
+    const end = lower.indexOf(lower.startsWith("<script", a) ? "</script" : "</style", a);
+    if (end < 0) return out;
+    i = end + 2;
+  }
+}
+const text = (html: string) => stripBlocks(html).replace(/<[^<>]{0,2000}>/g, " ").replace(/\s+/g, " ");
 
 export function evaluateRule(rule: AutoCheckRule, pages: Pages): Omit<CheckResult, "reqId"> {
   const { homepage, privacy } = pages;
@@ -29,7 +44,8 @@ export function evaluateRule(rule: AutoCheckRule, pages: Pages): Omit<CheckResul
       ? { status: "pass", reason: `Homepage loaded (HTTP ${homepage.status})`, evidenceUrl: homepage.url }
       : { status: "fail", reason: `Homepage returned HTTP ${homepage.status}`, evidenceUrl: homepage.url };
   }
-  if (!homepage) return { status: "unsure", reason: "Homepage could not be loaded" };
+  if (!homepage || homepage.status < 200 || homepage.status >= 300)
+    return { status: "unsure", reason: homepage ? `Homepage returned HTTP ${homepage.status}` : "Homepage could not be loaded" };
   switch (rule.type) {
     case "https":
       return new URL(homepage.url).protocol === "https:"
@@ -51,7 +67,7 @@ export function evaluateRule(rule: AutoCheckRule, pages: Pages): Omit<CheckResul
     case "support_email_on_domain": {
       const domain = stripWww(new URL(homepage.url).hostname).toLowerCase();
       const emails = [homepage, privacy]
-        .flatMap((p) => (p ? [...p.html.matchAll(/[a-z0-9._%+-]+@([a-z0-9-]+(?:\.[a-z0-9-]+)+)/gi)].map((m) => m[1].toLowerCase()) : []));
+        .flatMap((p) => (p ? [...p.html.matchAll(/[a-z0-9._%+-]{1,64}@([a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63}){1,10})/gi)].map((m) => m[1].toLowerCase()) : []));
       if (!emails.length) return { status: "unsure", reason: "No email address found on the homepage or privacy page" };
       return emails.some((d) => d === domain || d.endsWith("." + domain))
         ? { status: "pass", reason: `Found an email address on ${domain}`, evidenceUrl: homepage.url }
@@ -66,13 +82,14 @@ export async function runChecks(
   resolve?: Resolver,
 ): Promise<CheckResult[]> {
   const pages: Pages = { homepage: null, privacy: null };
-  const home = await safeFetch(homepageUrl, resolve);
+  const signal = AbortSignal.timeout(10000); // shared deadline for the whole run
+  const home = await safeFetch(homepageUrl, resolve, fetch, signal);
   if ("error" in home) pages.homepageError = home.error;
   else {
     pages.homepage = { url: home.finalUrl, status: home.status, html: home.html };
-    const link = findPrivacyLink(home.html, home.finalUrl);
+    const link = !home.ok ? null : findPrivacyLink(home.html, home.finalUrl);
     if (link) {
-      const p = await safeFetch(link, resolve);
+      const p = await safeFetch(link, resolve, fetch, signal);
       if (!("error" in p) && p.ok) pages.privacy = { url: p.finalUrl, status: p.status, html: p.html };
     }
   }

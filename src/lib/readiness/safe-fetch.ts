@@ -44,9 +44,10 @@ export function isBlockedAddress(ip: string): boolean {
   if (!g) return true;
   const embedded = (hi: number, lo: number) => v4Blocked([hi >> 8, hi & 255, lo >> 8, lo & 255]);
   if (g.slice(0, 5).every((n) => n === 0) && (g[5] === 0 || g[5] === 0xffff)) return embedded(g[6], g[7]); // ::, ::1, ::ffff:a.b.c.d
+  if (g.slice(0, 4).every((n) => n === 0) && g[4] === 0xffff && g[5] === 0) return embedded(g[6], g[7]); // ::ffff:0:a.b.c.d
   if (g[0] === 0x64 && g[1] === 0xff9b) return embedded(g[6], g[7]); // NAT64
   if (g[0] === 0x2002) return embedded(g[1], g[2]); // 6to4
-  return (g[0] & 0xfe00) === 0xfc00 || (g[0] & 0xffc0) === 0xfe80 || (g[0] & 0xff00) === 0xff00;
+  return (g[0] & 0xfe00) === 0xfc00 || (g[0] & 0xffc0) === 0xfe80 || (g[0] & 0xffc0) === 0xfec0 || (g[0] & 0xff00) === 0xff00;
 }
 
 export type Resolver = (host: string) => Promise<string[]>;
@@ -63,7 +64,7 @@ export async function checkUrl(raw: string, resolve: Resolver = defaultResolve):
   let addrs: string[];
   if (isIP(host)) addrs = [host];
   else {
-    try { addrs = await resolve(host); } catch { return "Host could not be resolved"; }
+    try { addrs = await Promise.race([resolve(host), new Promise<never>((_, rej) => setTimeout(() => rej(new Error("dns timeout")), 3000).unref())]); } catch { return "Host could not be resolved"; }
   }
   if (!addrs.length || addrs.some(isBlockedAddress)) return "That address is not allowed (private or internal)";
   return null;
@@ -90,6 +91,7 @@ export async function safeFetch(
   url: string,
   resolve: Resolver = defaultResolve,
   fetchImpl: typeof fetch = fetch,
+  deadline?: AbortSignal,
 ): Promise<{ ok: boolean; status: number; finalUrl: string; html: string } | { error: string }> {
   let current = url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
@@ -99,7 +101,7 @@ export async function safeFetch(
     try {
       res = await fetchImpl(current, {
         redirect: "manual",
-        signal: AbortSignal.timeout(5000),
+        signal: deadline ? AbortSignal.any([deadline, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000),
         headers: { "User-Agent": "ClearanceReadinessCheck/0.1", Accept: "text/html,*/*;q=0.5" },
       });
     } catch {
