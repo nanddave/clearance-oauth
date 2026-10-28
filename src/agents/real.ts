@@ -94,7 +94,7 @@ export function makeRealAgents(): AgentImpls {
           continue;
         }
         if (!res.ok) {
-          misses.push({ s, status: res.status, why: (await res.text().catch(() => "")).split(key).join("[key]").replace(/\s+/g, " ").slice(0, 120) }); // never echo the key
+          misses.push({ s, status: res.status, why: res.status === 401 || res.status === 403 ? "rejected the API key" : (await res.text().catch(() => "")).split(key).join("[key]").replace(/\s+/g, " ").slice(0, 120) }); // never echo the key
           continue;
         }
         const t = (await res.json().catch(() => ({}))) as { composio_managed_auth_schemes?: unknown };

@@ -128,6 +128,14 @@ describe("routeStatus", () => {
     expect(ids).not.toContain("sensitive");
   });
 
+  it("an empty plan with nothing ticked is not reported complete", () => {
+    const g = structuredClone(getGuide("github")!);
+    g.gates = [];
+    g.requirements = [];
+    const s = parseSelection(g, new URLSearchParams());
+    expect(routeStatus(g, s, computePlan(g, s)).own.state).toBe("in_progress");
+  });
+
   it("ticking every step is reported complete, never verified", () => {
     const g = getGuide("docusign")!;
     const q = `have=${g.requirements.map((r) => r.id).join(",")}&done=${g.gates.map((x) => x.id).join(",")}`;

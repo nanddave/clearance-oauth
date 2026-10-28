@@ -21,8 +21,8 @@ export function PathList({ guide, plan, done, currentId, onDone, renderKits }: {
         const complete = done.has(g.id);
         const current = g.id === currentId;
         return (
-          <li key={`${g.id}-${current}`} className={`relative rounded-xl border bg-white ${current ? "border-zinc-900 shadow-sm" : "border-zinc-200"}`}>
-            <details open={current || undefined}>
+          <li key={g.id} className={`relative rounded-xl border bg-white ${current ? "border-zinc-900 shadow-sm" : "border-zinc-200"}`}>
+            <details>
               <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 p-4 marker:hidden [&::-webkit-details-marker]:hidden">
                 <span aria-hidden="true" className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${complete ? "bg-emerald-700 text-white" : current ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-700"}`}>
                   {complete ? "✓" : i + 1}
@@ -47,7 +47,7 @@ export function PathList({ guide, plan, done, currentId, onDone, renderKits }: {
                 {renderKits?.(g.id) && <details className="mt-3"><summary className="cursor-pointer text-xs font-medium text-zinc-800 underline underline-offset-2">Prepared material for this step</summary>{renderKits(g.id)}</details>}
                 <div className="mt-4 flex flex-wrap items-center gap-4">
                   <button type="button" onClick={() => onDone(g.id, !complete)} className="min-h-10 rounded-md border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-900 hover:bg-zinc-50">{complete ? "Undo reported completion" : "Mark done"}</button>
-                  {g.claimIds.length > 0 && <span className="text-xs text-zinc-500">Sources: {g.claimIds.map((id, j) => <span key={id}>{j > 0 && ", "}<a href={`#claim-${id}`} className="underline underline-offset-2">{id}</a></span>)}</span>}
+                  {g.claimIds.length > 0 && <span className="text-xs text-zinc-500">Sources: {g.claimIds.map((id, j) => <span key={id}>{j > 0 && ", "}<a href={`#claim-${id}`} onClick={() => document.getElementById("evidence-details")?.setAttribute("open", "")} className="underline underline-offset-2">{id}</a></span>)}</span>}
                 </div>
               </div>
             </details>

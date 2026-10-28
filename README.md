@@ -2,7 +2,7 @@
 
 **Live:** https://clearance-oauth.vercel.app · **Repo:** https://github.com/nanddave/clearance-oauth
 
-Composio's shared OAuth apps get an agent live on day one. Two things take a developer off that path: putting their own app's name on the consent screen, which Composio's docs recommend for production, or needing one of the 258 apps Composio doesn't manage. Either way they now face provider review queues, security audits, partner programs and paid tiers, and Composio's guides stop at "Ready to Submit".
+Composio's managed OAuth apps let developers test many connections without registering an app. Developers may still need their own provider app for branding, scopes, quota, or a toolkit without managed auth. That introduces provider-specific setup, reviews, security checks, and sometimes paid or partner requirements.
 
 Clearance first answers the question most developers actually have: **can I just use Composio's app?** Then, for their own app, it tells them:
 - **How hard it is**: Self-serve, Review, Gated or Blocked.
@@ -12,22 +12,24 @@ Clearance first answers the question most developers actually have: **can I just
 
 For that step it either **does it**, **prepares it**, or says **only you can**. Every fact carries how we know it.
 
-## Try it
-- Open `/g/github`: Composio's app is available now, so the next step is a connect-and-check script. Switch to "Your own app" for the approval plan.
-- Open a reviewed guide, for example `/g/gmail`. Switch "send" and "read" and watch the verdict move from Review (about 10 working days) to Gated (30 or more, plus a security audit).
-- Tick what you already have, or mark steps done. The tracker, the next step and the clocks follow you, and the URL keeps your state so it can be shared.
-- On `/g/slack`, type an app name and get a Slack app creation page pre-filled with scopes and Composio's redirect.
-- On `/g/github`, a GitHub App manifest form does the same. GitHub sends you back with the step done; the code it returns is stripped from the URL before the page renders and is never exchanged.
-- Paste an OAuth error into **Got an error?**
-- Type an app we haven't reviewed (Notion, Calendly…) and the agents research it live.
-- Agents can read the same answer as JSON: `GET /api/guides/gmail?t.uses=send&lane=own&done=create_project`. The `decision` object is typed (`lane`, `ownApp.status`, blockers with evidence ids, `connection: "unknown"`) and marks progress as user-reported.
+## Review it in five minutes
+
+1. Open the [live site](https://clearance-oauth.vercel.app) and choose Gmail. Select **Read and send** and **Anyone with a Google account**. Compare the managed route (test today, scopes unconfirmed) with your own app (restricted review and an unknown security-assessment wait).
+2. Select **Your own app**. The two clocks show when you can test and when your own app may launch. Open a checkpoint in **Journey to launch**, tick a requirement, and watch the next action and share URL update. A tick is labelled as reported progress, never a verified connection.
+3. Try [GitHub](https://clearance-oauth.vercel.app/g/github) for an easier route, [Gusto](https://clearance-oauth.vercel.app/g/gusto) for a partner gate, and [DocuSign](https://clearance-oauth.vercel.app/g/docusign) for provider review. Slack and GitHub include prefilled provider setup; the developer confirms the final creation.
+4. Type an app outside the reviewed library. The agents research it live, show their work, and label the result **agent-generated, not human-reviewed**. This uses the live research budget, so a daily limit may temporarily stop new runs.
+5. Open the [Gmail agent JSON](https://clearance-oauth.vercel.app/api/guides/gmail?t.uses=read_send&t.audience=external&lane=own). Its versioned `decision` distinguishes route availability, reported setup progress, and the still-unknown connection and tool result.
+
+**A useful reviewer prompt for an agent:** “Read the JSON guide for Gmail read-and-send with external users. Can a real user perform both actions now? Name the evidence for your answer, what remains unknown, and the next test or provider step. Do not treat user-reported completion as verification.”
+
+The guide is a decision aid. It cannot access a reviewer’s Composio account or prove their connection without a local test. The setup commands stay on the developer’s machine; paste a non-secret error into **Connection not working?** for known fixes.
 
 ## Key decisions
 
 **1. Difficulty depends on the app *and* what your agent does with it.**
 - Gmail send is a sensitive scope: about 10 working days of review.
 - Gmail read is restricted: 30 or more working days, plus a yearly CASA security assessment.
-- So guides have toggles, and the verdict is computed rather than written. An engine walks the gate graph (longest path) and gives three clocks:
+- So guides have use-case choices, and the verdict is computed rather than written. An engine walks the gate graph (longest path) and computes three clocks, with the two most useful shown first:
   - **dev**: until you can build and test
   - **if you had everything**: the provider's own steps only
   - **your plan**: adds whatever you're still missing
@@ -44,7 +46,7 @@ For that step it either **does it**, **prepares it**, or says **only you can**. 
 
 **3. Honest about what a guide can't know.**
 - "Can this user connect right now?" and "Can the agent do this action?" need the developer's own Composio account, so the page always says "unknown" for them.
-- The setup scripts close that loop on the developer's machine. One script uses Composio's managed app; the other uses your own app and sets the redirect URI it tells you to register. Each creates the auth config, prints a connect link, waits for ACTIVE, then runs one read-only tool, because ACTIVE alone doesn't prove a tool works.
+- The setup scripts help close that loop on the developer's machine. The managed script uses Composio's app without registering OAuth credentials; the own-app script creates a custom auth config with the redirect URI it tells you to register. Both print a connect link, wait for ACTIVE, then run one read-only tool, because ACTIVE alone doesn't prove a tool works.
 - No secret ever reaches our server.
 
 **4. Agents do only what providers allow, and say so.**
@@ -52,7 +54,7 @@ For that step it either **does it**, **prepares it**, or says **only you can**. 
 | App | Agent does it | Agent prepares it | Only you |
 |---|---|---|---|
 | Slack | Pre-filled manifest link with the scopes you choose; you click Create | | |
-| GitHub | Manifest form with minimal permissions; you click Create | | |
+| GitHub | Pre-filled GitHub App registration URL with minimal permissions; you click Create | | |
 | Gmail | | Limited Use statement, scope justifications | Console clicks: Google has no public API to create these OAuth clients |
 | Gusto | | Pre-approval email | |
 | DocuSign, Xero | | | Login, payment, legal, submit |
@@ -86,7 +88,8 @@ Every call is priced. The live log shows the cost of each step and the total, so
 pnpm install
 cp .env.example .env.local   # fill in what you have
 pnpm dev
-pnpm test                    # 111 unit tests
+pnpm test
+pnpm eval --only notion       # live accuracy check (needs ANTHROPIC_API_KEY); drop --only for all six apps
 node scripts/smoke.mjs http://localhost:3000
 ```
 
@@ -95,6 +98,15 @@ node scripts/smoke.mjs http://localhost:3000
 - **No Upstash:** jobs live in memory, which is fine locally. On Vercel, add the Upstash integration (it sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`), so the instance running research and the one answering polls share state.
 
 Stack: Next.js 16 (App Router), TypeScript, Zod, Vitest, `@anthropic-ai/sdk`, Upstash Redis over REST, Vercel.
+
+## Accuracy check
+`pnpm eval` regenerates guides with the live agents and scores each one (`src/lib/evalScore.ts`):
+- **False green:** says "Test today" on Composio's app when the reviewed guide says Composio has no app.
+- **Tier match:** same difficulty tier as the human-reviewed guide.
+- **Unsupported waits:** a known, non-zero wait with no word-for-word checked source behind it.
+- **Next step usable:** there is a concrete next step.
+
+It runs three reviewed apps (Xero, Gusto, Slack; DocuSign is left out because the synthesizer sees it as its example) and three it hasn't seen (Notion, Calendly, HubSpot), stops at `--budget` (default $20), and writes `docs/eval/results.md`.
 
 ## Limitations (known, chosen)
 - **Six reviewed guides**, picked to cover the spread:
@@ -116,6 +128,5 @@ Stack: Next.js 16 (App Router), TypeScript, Zod, Vitest, `@anthropic-ai/sdk`, Up
   - reading a screenshot of a provider console to set your stage
   - a Gemini cross-check of key numbers
   - calendar reminders for long waits
-  - an accuracy eval across 6 reviewed plus 5 unfamiliar apps, scoring false "can connect" answers and unsupported definitive claims (planned spend ≤ $20)
 
 Design: `docs/superpowers/specs/2026-10-28-clearance-prd.md` · Research notes: `docs/research/2026-10-27-provider-facts.md`

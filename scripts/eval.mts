@@ -16,6 +16,8 @@ const arg = (name: string) => {
 const apps = arg("only")?.split(",") ?? APPS;
 const budget = Number(arg("budget") ?? 20);
 if (!process.env.ANTHROPIC_API_KEY) throw new Error("Set ANTHROPIC_API_KEY: without it the pipeline runs stub agents");
+if (!process.env.COMPOSIO_API_KEY) throw new Error("Set COMPOSIO_API_KEY: without it coverage is unknown and false greens can't show up");
+if (!(budget > 0)) throw new Error("--budget must be a positive number of USD");
 
 const rows: (Score & { costUsd: number; seconds: number; error?: string })[] = [];
 let spent = 0;

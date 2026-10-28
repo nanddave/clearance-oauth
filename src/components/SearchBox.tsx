@@ -25,7 +25,7 @@ export function SearchBox({ library }: { library: { slug: string; name: string }
   }
 
   return (
-    <form onSubmit={submit} className="mt-6" aria-busy={busy}>
+    <form onSubmit={submit} aria-busy={busy}>
       <label htmlFor="app-q" className="block text-sm font-medium text-zinc-800">Which app do you want to connect?</label>
       <div className="mt-1 flex flex-col gap-2 sm:flex-row">
         <input

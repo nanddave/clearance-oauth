@@ -131,7 +131,7 @@ export function routeStatus(guide: Guide, sel: Selection, plan: Plan): { managed
             : null,
   };
   const os: OwnState =
-    plan.tier === "blocked" ? "blocked" : isStub(guide) || !oauthProven(guide) ? "unknown" : plan.order.length === 0 ? "reported_complete" : "in_progress";
+    plan.tier === "blocked" ? "blocked" : isStub(guide) || !oauthProven(guide) ? "unknown" : plan.order.length === 0 && (sel.done?.size || sel.have.size) ? "reported_complete" : "in_progress";
   const b = plan.topBlocker;
   const own: RouteStatus<OwnState> = {
     state: os,

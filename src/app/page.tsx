@@ -13,14 +13,14 @@ export default function Home() {
   });
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pt-16">
+    <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
       <div className="max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">OAuth launch navigator</p>
-        <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl">Know what stands between your agent and a real connection.</h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-700">Find an app, see what you can test today, and get the next step toward letting real users connect.</p>
+        <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl">Know what blocks your OAuth launch.</h1>
+        <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-700">See what you can test today, what must wait, and what to do next.</p>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
         <SearchBox library={guides.map(({ guide }) => ({ slug: guide.slug, name: guide.name }))} />
         <ol className="mt-6 grid gap-3 border-t border-zinc-100 pt-5 text-sm sm:grid-cols-3">
           <li><span className="mr-2 font-semibold text-emerald-800">01</span> Choose an app and use case</li>
@@ -29,13 +29,13 @@ export default function Home() {
         </ol>
       </div>
 
-      <section aria-labelledby="lib" className="mt-12">
+      <section aria-labelledby="lib" className="mt-8">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 id="lib" className="text-xl font-semibold text-zinc-950">Start with a reviewed guide</h2>
             <p className="mt-1 text-sm text-zinc-600">These examples show different approval paths. Choose your exact use case inside each guide.</p>
           </div>
-          <span className="text-xs text-zinc-500">6 reviewed apps</span>
+          <span className="text-xs text-zinc-500">{guides.length} reviewed apps</span>
         </div>
         <ul className="mt-5 grid gap-3 sm:grid-cols-2">
           {guides.map(({ guide, routes }) => (

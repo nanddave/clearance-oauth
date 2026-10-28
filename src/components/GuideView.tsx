@@ -24,7 +24,7 @@ function CopyLink() {
 }
 
 /** The use case and reported progress live in the URL, so the same plan can be shared. */
-export function GuideView({ guide, query }: { guide: Guide; query: string }) {
+export function GuideView({ guide, query, refresh }: { guide: Guide; query: string; refresh?: "running" | "failed" }) {
   const router = useRouter();
   const pathname = usePathname();
   const [sel, setSel] = useState<Selection>(() => parseSelection(guide, new URLSearchParams(query)));
@@ -39,7 +39,8 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
   });
   const setDone = (id: string, on: boolean) => update((s) => {
     const done = new Set(s.done);
-    on ? done.add(id) : done.delete(id);
+    if (on) done.add(id);
+    else done.delete(id);
     return { ...s, done };
   });
 
@@ -50,6 +51,12 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
   const lane = sel.lane === "managed" ? "managed" : "own";
   const own = lane === "own";
   const website = safeHref(guide.website);
+  const [reqOpen] = useState(() => next?.kind === "requirement"); // open once; a controlled open would snap shut as you tick
+  useEffect(() => {
+    if (refresh !== "running") return;
+    const id = setInterval(() => router.refresh(), 5000); // picks up the new guide (or the failure) when the run ends
+    return () => clearInterval(id);
+  }, [refresh, router]);
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8 sm:px-6">
@@ -57,29 +64,28 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
         <span>Updated {guide.updatedAt.slice(0, 10)}{website && <> · <a href={website} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Provider docs</a></>}</span>
         <CopyLink />
       </div>
-      <div className="mt-6 max-w-3xl">
+      <div className="mt-4 max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800">Connection guide</p>
         <h1 className="mt-1 text-4xl font-semibold tracking-tight text-zinc-950">{guide.name}</h1>
-        <p className="mt-2 text-sm leading-6 text-zinc-700">{guide.summary}</p>
       </div>
 
       {guide.origin === "generated" && <div role="note" className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
         <strong>Agent-generated · not human-reviewed · checked {guide.updatedAt.slice(0, 10)}</strong>
         {isStub(guide) && <p className="mt-1">Placeholder from stub agents. No live research has run; do not rely on its numbers.</p>}
+        {refresh && <p className="mt-1">{refresh === "running" ? "Researching an update now; this is the last finished version." : "The latest update failed; this is the last finished version."} <a href={`/api/jobs/${guide.slug}`} className="underline underline-offset-2">Run log</a></p>}
       </div>}
 
-      {guide.toggles.length > 0 && <section aria-labelledby="use-case" className="mt-7 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
+      {guide.toggles.length > 0 && <section aria-labelledby="use-case" className="mt-5 rounded-xl border border-zinc-200 bg-white p-4">
         <h2 id="use-case" className="text-base font-semibold text-zinc-950">What does your agent need to do?</h2>
-        <p className="mb-4 mt-1 text-xs text-zinc-600">Change these to see the path for your users.</p>
-        <Toggles toggles={guide.toggles} value={sel.toggles} onChange={(id, opt) => update((s) => ({ ...s, toggles: { ...s.toggles, [id]: opt } }))} />
+        <div className="mt-3"><Toggles toggles={guide.toggles} value={sel.toggles} onChange={(id, opt) => update((s) => ({ ...s, toggles: { ...s.toggles, [id]: opt } }))} /></div>
       </section>}
 
       <LaneChooser guide={guide} routes={routes} lane={lane} onChange={(nextLane) => update((s) => ({ ...s, lane: nextLane }))} />
       <DiagnosisCard guide={guide} plan={plan} routes={routes} lane={lane} />
 
-      <section aria-label="What to do next" className="mt-7">
+      <section aria-label="What to do next" className="mt-4">
         <NextActionCard action={own ? next : managedAction(guide)} kits={own ? next ? kitsFor(guide, next.id) : [] : kitsFor(guide, "managed_connect")}
-          onDone={own && next ? () => next.kind === "gate" ? setDone(next.id, true) : setHave([next.id], true) : null} />
+          onDone={own && next ? () => next.kind === "gate" ? setDone(next.id, true) : setHave([next.id], true) : null} own={own ? routes.own : undefined} />
       </section>
 
       {own && <>
@@ -92,7 +98,7 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
             renderKits={(id) => kitsFor(guide, id).length ? <KitList kits={kitsFor(guide, id)} /> : null} /></div>
         </section>
 
-        <details id="requirements" open={next?.kind === "requirement" || undefined} className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
+        <details id="requirements" open={reqOpen || undefined} className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
           <summary className="cursor-pointer text-base font-semibold text-zinc-950">Requirements · {plan.missing.length} still needed</summary>
           <p className="mt-2 text-sm text-zinc-600">Tick what you have. Ticks are your report; the site checker can verify some public pages.</p>
           <div className="mt-4">{relevant.length ? <ReadinessChecklist guide={guide} reqs={relevant} have={sel.have} onToggle={(id, on) => setHave([id], on)} onPass={(ids) => setHave(ids, true)} onFail={(ids) => setHave(ids, false)} /> : <p className="text-sm text-zinc-600">No prerequisites for this use case.</p>}</div>
@@ -104,10 +110,7 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
           <summary className="cursor-pointer text-sm font-semibold text-zinc-900">Connection not working? Troubleshoot it</summary>
           <div className="mt-4"><ErrorDecoder slug={guide.slug} /></div>
         </details>
-        <details className="rounded-xl border border-zinc-200 bg-white p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-zinc-900">What this guide can and cannot confirm</summary>
-          <AnswersTable answers={answers(guide, plan, sel)} />
-        </details>
+        <AnswersTable answers={answers(guide, plan, sel)} />
       </div>
 
       <details id="evidence-details" className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
