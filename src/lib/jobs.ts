@@ -18,6 +18,9 @@ export async function getJob(slug: string): Promise<Job | undefined> {
   return job;
 }
 
+/** The last finished guide, kept apart from the job so a refresh in progress (or failed) never hides it. */
+export const getSavedGuide = async (slug: string) => (await kvGet<Job>(`guide:${slug}`))?.guide;
+
 const REFRESH_MS = 30 * 86400_000; // research older than this is redone on the next request; the old link keeps working until then
 
 /** A running job or a recent guide is reused; a failed, guide-less or month-old job is replaced on request. */

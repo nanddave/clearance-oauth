@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getJob, isReusable, startJob } from "./jobs";
+import { getJob, getSavedGuide, isReusable, startJob } from "./jobs";
 import { makeStubs } from "../agents/stubs";
 
 const stubs = makeStubs(async () => {});
@@ -51,5 +51,12 @@ describe("leases and stale runs", () => {
     const job = await getJob("dead-run");
     expect(job?.status).toBe("failed");
     expect(isReusable(job)).toBe(false);
+  });
+
+  it("a failed refresh keeps the last finished guide reachable", async () => {
+    await (await startJob("keep-me", "keep-me", stubs))();
+    await (await startJob("keep-me", "keep-me", { ...stubs, scout: async () => { throw new Error("boom"); } }))();
+    expect((await getJob("keep-me"))?.status).toBe("failed");
+    expect((await getSavedGuide("keep-me"))?.slug).toBe("keep-me");
   });
 });

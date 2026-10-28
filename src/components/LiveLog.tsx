@@ -7,7 +7,7 @@ import type { AgentEvent } from "@/agents/types";
 import type { Guide } from "@/lib/schema";
 import { GuideView } from "./GuideView";
 
-const usd = (n: number) => `$${n < 0.01 ? n.toFixed(4) : n.toFixed(3)}`;
+const usd = (n: number) => (n > 0 && n < 0.001 ? "under $0.001" : `$${n < 0.01 ? n.toFixed(4) : n.toFixed(3)}`);
 
 type Status = "none" | "running" | "done" | "failed" | "gone";
 

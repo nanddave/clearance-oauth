@@ -4,7 +4,7 @@ import { toSlug } from "@/agents/slug";
 import { GuideView } from "@/components/GuideView";
 import { LiveLog } from "@/components/LiveLog";
 import { getGuide } from "@/lib/guides";
-import { getJob } from "@/lib/jobs";
+import { getJob, getSavedGuide } from "@/lib/jobs";
 
 async function Guide({ params, searchParams }: PageProps<"/g/[slug]">) {
   const { slug } = await params;
@@ -20,6 +20,8 @@ async function Guide({ params, searchParams }: PageProps<"/g/[slug]">) {
   if (guide) return <GuideView key={slug} guide={guide} query={query} />;
   const job = await getJob(slug);
   if (job?.status === "done" && job.guide) return <GuideView key={slug} guide={job.guide} query={query} />;
+  const saved = job && (await getSavedGuide(slug)); // a refresh is running or failed: keep showing the last good guide
+  if (saved) return <GuideView key={slug} guide={saved} query={query} refresh={job.status === "running" ? "running" : "failed"} />;
   return <LiveLog key={slug} slug={slug} initial={job?.status ?? "none"} query={query} />;
 }
 
