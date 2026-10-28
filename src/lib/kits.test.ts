@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getGuide } from "./guides";
-import { COMPOSIO_REDIRECT, githubManifest, kitsFor, slackManifestUrl } from "./kits";
+import { COMPOSIO_REDIRECT, githubAppUrl, kitsFor, slackManifestUrl } from "./kits";
 
 describe("kits", () => {
   it("Slack link round-trips an awkward name and carries the Composio redirect", () => {
@@ -11,11 +11,12 @@ describe("kits", () => {
     expect(m.oauth_config.redirect_urls).toEqual([COMPOSIO_REDIRECT]);
   });
 
-  it("GitHub manifest is valid JSON with the callback and a return URL", () => {
-    const m = JSON.parse(githubManifest("", "https://x.dev", "https://clearance.test/g/github?done=create_app"));
-    expect(m.name).toBe("My agent");
-    expect(m.callback_urls).toEqual([COMPOSIO_REDIRECT]);
-    expect(m.redirect_url).toContain("done=create_app");
+  it("GitHub prefill sets the Composio callback and sends nothing back to us", () => {
+    const u = new URL(githubAppUrl("", "https://x.dev"));
+    expect(u.origin + u.pathname).toBe("https://github.com/settings/apps/new");
+    expect(u.searchParams.get("name")).toBe("My agent");
+    expect(u.searchParams.getAll("callback_urls[]")).toEqual([COMPOSIO_REDIRECT]);
+    expect(u.searchParams.has("redirect_url")).toBe(false);
   });
 
   it("puts the setup script on the step that yields credentials, and drafts where we have them", () => {

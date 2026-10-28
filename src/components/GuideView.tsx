@@ -6,7 +6,7 @@ import { computePlan, type Selection } from "@/lib/engine";
 import type { Guide } from "@/lib/schema";
 import { isStub, safeHref } from "@/lib/display";
 import { parseSelection, toSearchParams } from "@/lib/selection";
-import { answers, composioNote, managedAction, nextAction } from "@/lib/next";
+import { answers, managedAction, nextAction, routeStatus } from "@/lib/next";
 import { LaneChooser } from "./LaneChooser";
 import { ClaimList } from "./ClaimList";
 import { ErrorDecoder, KitList } from "./Kits";
@@ -140,7 +140,7 @@ export function GuideView({ guide, query }: { guide: Guide; query: string }) {
         </div>
       )}
 
-      <LaneChooser guide={guide} plan={plan} lane={managed ? "managed" : "own"} note={composioNote(guide, sel)} placeholder={stub} onChange={(lane) => update((s) => ({ ...s, lane }))} />
+      <LaneChooser guide={guide} plan={plan} lane={managed ? "managed" : "own"} route={routeStatus(guide, sel, plan)} placeholder={stub} onChange={(lane) => update((s) => ({ ...s, lane }))} />
 
       {guide.toggles.length > 0 && (
         <Section id="toggles" title="What does your agent need?" hint="Change these and both answers update.">

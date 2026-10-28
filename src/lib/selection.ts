@@ -17,9 +17,10 @@ export function parseSelection(guide: Guide, params: URLSearchParams): Selection
 }
 
 export function toSearchParams(sel: Selection): string {
-  const parts = Object.entries(sel.toggles).map(([k, v]) => `t.${k}=${v}`);
-  if (sel.have.size) parts.push(`have=${[...sel.have].join(",")}`);
-  if (sel.done?.size) parts.push(`done=${[...sel.done].join(",")}`);
-  if (sel.lane === "own") parts.push("lane=own");
-  return parts.length ? `?${parts.join("&")}` : "";
+  const q = new URLSearchParams(Object.entries(sel.toggles).map(([k, v]) => [`t.${k}`, v]));
+  if (sel.have.size) q.set("have", [...sel.have].join(","));
+  if (sel.done?.size) q.set("done", [...sel.done].join(","));
+  if (sel.lane === "own") q.set("lane", "own");
+  const s = q.toString().replaceAll("%2C", ","); // ids are schema-checked, so commas only ever separate them
+  return s ? `?${s}` : "";
 }

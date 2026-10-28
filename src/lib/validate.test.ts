@@ -23,4 +23,13 @@ describe("validateGuide", () => {
     g.requirements.find((r) => r.id === "installs10")!.afterGates = ["preliminary"]; // installs after the review that needs them
     expect(validateGuide(g).some((e) => e.includes("cycle"))).toBe(true);
   });
+
+  it("rejects an optional step that always applies", () => {
+    const g = docusign();
+    g.gates[0].title = "Optional: request extra scopes";
+    delete g.gates[0].appliesWhen;
+    expect(validateGuide(g).some((e) => e.startsWith(`gate ${g.gates[0].id}:`) && e.includes("toggle"))).toBe(true);
+    g.gates[0].appliesWhen = { [g.toggles[0].id]: [g.toggles[0].options[0].id] };
+    expect(validateGuide(g).some((e) => e.includes("optional"))).toBe(false);
+  });
 });

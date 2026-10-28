@@ -46,7 +46,7 @@ export function makeStubs(sleep: () => Promise<void> = defaultSleep): AgentImpls
         toggles: [],
         gates: [
           {
-            id: "dev-register",
+            id: "dev_register",
             title: "Register an OAuth app in the provider's developer portal",
             phase: "dev",
             kind: "setup",
@@ -61,14 +61,14 @@ export function makeStubs(sleep: () => Promise<void> = defaultSleep): AgentImpls
             nextStep: "Find the provider's developer portal and register an OAuth app.",
           },
           {
-            id: "prod-review",
+            id: "prod_review",
             title: "Provider review (if any)",
             phase: "production",
             kind: "review",
             owner: "provider",
             effortHours: [0, 0],
             waitDays: "unknown",
-            dependsOn: ["dev-register"],
+            dependsOn: ["dev_register"],
             requires: [],
             blockers: [],
             agentCan: "none",

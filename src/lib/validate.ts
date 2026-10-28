@@ -25,6 +25,12 @@ export function validateGuide(guide: Guide): string[] {
   for (const t of guide.toggles) ref(toggles.get(t.id)!.has(t.default), `toggle ${t.id}: default ${t.default} is not an option`);
   const checkWhen = (owner: string, w?: Record<string, string[]>) =>
     Object.entries(w ?? {}).forEach(([tid, opts]) => opts.forEach((o) => ref(!!toggles.get(tid)?.has(o), `${owner}: appliesWhen ${tid}=${o} unknown`)));
+  // an "optional" step that always applies would block every developer on something they may not need
+  const always = (w?: Record<string, string[]>) => !w || !Object.keys(w).length;
+  const optional = (owner: string, name: string, w?: Record<string, string[]>) =>
+    ref(!(always(w) && /\boptional\b/i.test(name)), `${owner}: "${name}" is optional but always applies; move it behind a toggle whose default option skips it`);
+  for (const g of guide.gates) optional(`gate ${g.id}`, g.title, g.appliesWhen);
+  for (const r of guide.requirements) optional(`requirement ${r.id}`, r.label, r.appliesWhen);
   for (const g of guide.gates) {
     checkWhen(`gate ${g.id}`, g.appliesWhen);
     g.dependsOn.forEach((d) => ref(gates.has(d), `gate ${g.id}: dependsOn ${d} missing`));

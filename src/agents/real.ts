@@ -21,7 +21,7 @@ const ResearchOut = z.object({
 const RESEARCH_SYSTEM = `You research how a developer registers their own OAuth app with one provider and gets it approved for production, so an AI agent (via Composio) can act for real users.
 Use web_search and web_fetch. Prefer the provider's own documentation. Read the pages you cite with web_fetch.
 Reply with JSON only: {"findings":[{"claim":"...","url":"...","quote":"..."}]}
-- quote: copied verbatim from the page at url, at most 300 characters.
+- quote: copied exactly from the page at url, character for character, at most 200 characters.
 - State numbers (days, installs, fees, user caps) only when a page states them.
 - 4 to 10 findings. If something important cannot be found, add {"claim":"Unknown: <what is missing>","url":"","quote":""}.`;
 
@@ -32,10 +32,13 @@ Rules:
 - A number (waitDays, acquireDays, installs, fees) must come from a cited claim; otherwise use "unknown".
 - Every gate has nextStep: the exact action, where to click, what to paste. Every gate or requirement with an unknown wait has whatToAsk: the question and whom to ask.
 - Status per claim: "reported", or "conflicting" when findings disagree. Code sets the final status.
-- toggles only when the use (scopes, audience, distribution) changes the gates; else [].
+- toggles only when the use (scopes, audience, distribution) changes the gates; else []. At most two, and only when the answer changes which steps apply (e.g. read vs write access).
+- A step the sources call optional or say "may be" required is never an always-required gate: put it behind a toggle whose default option skips it.
+- A prerequisite the developer already has or cannot buy (e.g. workspace owner rights) gets waitDays [0,0]; "unknown" only for real waits on the provider.
 - Redirect URI: tell the developer to register https://backend.composio.dev/api/v3/toolkits/auth/callback.
 - summary: two sentences, plain words, lead with the longest wait.
 - Include one claim stating whether the provider offers OAuth apps to third-party developers, citing the finding that shows it. If no finding shows it, say "Unknown: no source shows OAuth support".
+- Every id (gates, requirements, toggles, options) uses only lowercase letters, digits and _.
 - dependsOn lists gate ids only; a requirement that can only happen after a step (installs after the app exists) uses afterGates with that gate id.`;
 
 /** Real agents for one run: they share the pages the web tools returned and one deadline. */
@@ -75,17 +78,25 @@ export function makeRealAgents(): AgentImpls {
 
   return {
     async resolver(slug, log) {
-      const key = process.env.COMPOSIO_API_KEY;
+      const key = process.env.COMPOSIO_API_KEY?.trim();
       if (!key) {
         log("No Composio key configured, so coverage is unknown");
         return { managed: "unknown" };
       }
+      const misses: { s: string; status?: number; why: string }[] = [];
       for (const s of new Set([slug.replace(/-/g, ""), slug])) {
         const res = await fetch(`https://backend.composio.dev/api/v3.1/toolkits/${encodeURIComponent(s)}`, {
           headers: { "x-api-key": key },
           signal: AbortSignal.timeout(8000),
-        }).catch(() => null);
-        if (!res?.ok) continue;
+        }).catch((e: unknown) => (e instanceof Error ? e.message : String(e)));
+        if (typeof res === "string") {
+          misses.push({ s, why: res });
+          continue;
+        }
+        if (!res.ok) {
+          misses.push({ s, status: res.status, why: (await res.text().catch(() => "")).split(key).join("[key]").replace(/\s+/g, " ").slice(0, 120) }); // never echo the key
+          continue;
+        }
         const t = (await res.json().catch(() => ({}))) as { composio_managed_auth_schemes?: unknown };
         const schemes = t.composio_managed_auth_schemes;
         // managed only if Composio holds an OAuth app; a managed API-key scheme doesn't count (managed-auth directory)
@@ -93,7 +104,8 @@ export function makeRealAgents(): AgentImpls {
         log(`Composio toolkit '${s}': managed schemes [${Array.isArray(schemes) ? schemes.join(", ") : "not listed"}], so ${managed === true ? "Composio manages the OAuth app" : managed === false ? "bring your own OAuth app" : "coverage unknown"}`);
         return { managed };
       }
-      log("Not found in Composio's toolkit catalog");
+      if (misses.every((m) => m.status === 404)) log("Not found in Composio's toolkit catalog");
+      else for (const m of misses) log(m.status ? `Composio API answered ${m.status} for '${m.s}': ${m.why}` : `Composio API unreachable for '${m.s}': ${m.why}`);
       return { managed: "unknown" };
     },
 
@@ -133,7 +145,7 @@ export function makeRealAgents(): AgentImpls {
       const example = getGuide("docusign")!;
       const prompt = `Today: ${today}\nApp: ${query} (slug: ${slug})\nComposio managed: ${managed}\n\nExample guide:\n${JSON.stringify(example)}\n\nFindings:\n${JSON.stringify(all)}`;
       const text = await ask(log, { model: "claude-opus-5-5", system: SYNTH_SYSTEM, prompt, maxTokens: 16000, effort: "medium" }, () => "Built the gate graph from findings");
-      const fix = (g: Guide): Guide => ({ ...g, slug, origin: "generated", updatedAt: today, composio: { ...g.composio, managed } });
+      const fix = (g: Guide): Guide => ({ ...g, slug, origin: "generated", updatedAt: today, composio: { managed } }); // guideUrl/notes never from the model: it copied the example's
       // shape (zod) and usability (references, cycles, possible order) must both pass; one repair, then fail loudly
       const check = (raw: unknown): { guide?: Guide; errors: string[] } => {
         const parsed = GuideSchema.safeParse(raw);

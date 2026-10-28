@@ -85,9 +85,65 @@ export const oauthProven = (guide: Guide) =>
     (c) => /oauth/i.test(c.text) && !/\b(no|not|doesn't|does not|unknown|unclear)\b/i.test(c.text) && (c.status === "official" || c.status === "reported"),
   );
 
+const matchingNote = (guide: Guide, sel: Selection) => guide.composio.notes?.find((n) => applies(guide, sel, n.when));
+
 /** Composio's answer for this selection: the first matching note, else null (callers fall back to managed). */
 export function composioNote(guide: Guide, sel: Selection): string | null {
-  return guide.composio.notes?.find((n) => applies(guide, sel, n.when))?.text ?? null;
+  return matchingNote(guide, sel)?.text ?? null;
+}
+
+export type ManagedState = "can_test" | "scope_unconfirmed" | "unavailable" | "unknown";
+// reported_complete: every step ticked by the user; Clearance can't see the account, so it is never "verified"
+export type OwnState = "in_progress" | "reported_complete" | "blocked" | "unknown";
+export type RouteStatus<S> = { state: S; label: string; reason: string; nextProof: string | null };
+
+export const MANAGED_LABEL: Record<ManagedState, string> = {
+  can_test: "Test today",
+  scope_unconfirmed: "Test today · scopes unconfirmed",
+  unavailable: "Not available",
+  unknown: "Not confirmed",
+};
+export const OWN_LABEL: Record<OwnState, string> = {
+  in_progress: "",
+  reported_complete: "Reported complete · connection unverified",
+  blocked: "Blocked",
+  unknown: "Unknown",
+};
+
+/** One answer per route for this use case. Every surface (home, lane cards, answers, JSON) reads it from here. */
+export function routeStatus(guide: Guide, sel: Selection, plan: Plan): { managed: RouteStatus<ManagedState>; own: RouteStatus<OwnState> } {
+  const m = guide.composio.managed;
+  const note = matchingNote(guide, sel);
+  const ms: ManagedState = m === false ? "unavailable" : m !== true ? "unknown" : note?.scope === "unconfirmed" ? "scope_unconfirmed" : "can_test";
+  const managed: RouteStatus<ManagedState> = {
+    state: ms,
+    label: MANAGED_LABEL[ms],
+    reason:
+      note?.text ??
+      (m === true ? "Composio manages this app's OAuth; users see Composio's name." : m === false ? `Composio doesn't hold an OAuth app for ${guide.name}; you need your own.` : "We couldn't confirm Composio coverage for this app."),
+    nextProof:
+      ms === "can_test"
+        ? "Connect one test user and run one read-only tool."
+        : ms === "scope_unconfirmed"
+          ? "Connect a test user with the scopes you need, run one tool, and confirm with Composio before launch."
+          : ms === "unknown"
+            ? `Check Composio's toolkit list for ${guide.name}.`
+            : null,
+  };
+  const os: OwnState =
+    plan.tier === "blocked" ? "blocked" : isStub(guide) || !oauthProven(guide) ? "unknown" : plan.order.length === 0 ? "reported_complete" : "in_progress";
+  const b = plan.topBlocker;
+  const own: RouteStatus<OwnState> = {
+    state: os,
+    label: os === "in_progress" ? `${TIER_LABEL[plan.tier]} · ${clockLabel(plan.yours)}` : OWN_LABEL[os],
+    reason:
+      os === "unknown"
+        ? "No verified source shows this provider offers OAuth apps yet."
+        : (b ? `Slowest step: ${b.title} (${waitLabel(b.waitDays)}).` : "No provider review in your path.") +
+          (plan.unknownWaits.length ? ` Unknown: ${plan.unknownWaits.map((g) => g.title).join(", ")}.` : ""),
+    nextProof: os === "blocked" ? null : "Connect one real user through your own app and run one tool.",
+  };
+  return { managed, own };
 }
 
 export type Answer = { id: "managed" | "build" | "launch" | "connect" | "action"; question: string; answer: string; detail: string };
@@ -96,15 +152,13 @@ export type Answer = { id: "managed" | "build" | "launch" | "connect" | "action"
 export function answers(guide: Guide, plan: Plan, sel?: Selection): Answer[] {
   const build = plan.tier === "blocked" ? "no" : isStub(guide) || !oauthProven(guide) ? "unknown" : "yes";
   const b = plan.topBlocker;
-  const m = guide.composio.managed;
+  const r = routeStatus(guide, sel ?? { toggles: {}, have: new Set() }, plan).managed;
   return [
     {
       id: "managed",
       question: "Can I use Composio's app for this?",
-      answer: m === true ? "yes" : m === false ? "no" : "unknown",
-      detail:
-        (sel && composioNote(guide, sel)) ??
-        (m === true ? "Composio manages this app's OAuth; users see Composio's name." : m === false ? "You need your own OAuth app." : "Composio coverage not confirmed."),
+      answer: r.state === "can_test" ? "yes" : r.state === "unavailable" ? "no" : r.state === "scope_unconfirmed" ? "test only" : "unknown",
+      detail: r.reason,
     },
     {
       id: "build",
@@ -148,13 +202,15 @@ export function answers(guide: Guide, plan: Plan, sel?: Selection): Answer[] {
  * connection and action state need the developer's own Composio account, so they stay "unknown".
  */
 export function decision(guide: Guide, sel: Selection, plan: Plan) {
-  const status =
-    plan.tier === "blocked" ? "blocked" : isStub(guide) || !oauthProven(guide) ? "unknown" : plan.order.length === 0 ? "launch_ready" : "in_progress";
+  const route = routeStatus(guide, sel, plan);
   return {
     lane: sel.lane ?? "own",
-    managedAvailable: guide.composio.managed,
+    managedAvailable: guide.composio.managed, // Composio holds an app for the toolkit; whether it fits this use is `managed.state`
+    managed: { state: route.managed.state, reason: route.managed.reason, nextProof: route.managed.nextProof },
     ownApp: {
-      status,
+      status: route.own.state,
+      verified: false as const, // nothing here is checked against a real connection
+      nextProof: route.own.nextProof,
       tier: plan.tier,
       nextStepId: nextAction(guide, plan)?.id ?? null, // the own-app plan's step, whichever lane is chosen
       blockers: [plan.topBlocker, ...plan.unknownWaits].filter((g): g is Gate => !!g).map((g) => ({
@@ -174,7 +230,7 @@ export function agentView(guide: Guide, sel: Selection) {
   const plan = computePlan(guide, sel);
   const clock = (c: Plan["dev"]) => ({ ...c, label: clockLabel(c) });
   return {
-    version: 2,
+    version: 3,
     decision: decision(guide, sel, plan),
     slug: guide.slug,
     name: guide.name,

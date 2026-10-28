@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computePlan } from "./engine";
 import { getGuide, listGuides } from "./guides";
-import { agentView, answers, composioNote, nextAction } from "./next";
+import { agentView, answers, composioNote, nextAction, routeStatus } from "./next";
 import { parseSelection, toSearchParams } from "./selection";
 
 const sel = (slug: string, q = "") => {
@@ -65,7 +65,7 @@ describe("agentView", () => {
   it("is plain JSON with the selection echoed", () => {
     const { g, s } = sel("gmail", "t.uses=send&have=privacy_policy");
     const v = JSON.parse(JSON.stringify(agentView(g, s)));
-    expect(v.version).toBe(2);
+    expect(v.version).toBe(3);
     expect(v.selection).toEqual({ toggles: { uses: "send", audience: s.toggles.audience }, have: ["privacy_policy"], done: [], lane: "managed" });
     expect(v.decision).toMatchObject({ lane: "managed", managedAvailable: true, connection: "unknown", provenance: { have: "user_reported" } });
     expect(v.nextAction.id).toBe("managed_connect");
@@ -105,5 +105,49 @@ describe("decision", () => {
     g.claims = [{ id: "s", text: "Stub: live research not yet connected", status: "unknown", sources: [] }];
     g.gates = [];
     expect(agentView(g, parseSelection(g, new URLSearchParams())).decision.ownApp.status).toBe("unknown");
+  });
+});
+
+describe("routeStatus", () => {
+  const route = (slug: string, q = "") => {
+    const { g, s } = sel(slug, q);
+    return routeStatus(g, s, computePlan(g, s));
+  };
+
+  it("Gmail read on Composio's app is test-only until scopes are confirmed; send is testable", () => {
+    expect(route("gmail", "t.uses=read&t.audience=external").managed.state).toBe("scope_unconfirmed");
+    expect(route("gmail", "t.uses=read_send&t.audience=external").managed.state).toBe("scope_unconfirmed");
+    expect(route("gmail", "t.uses=send&t.audience=external").managed.state).toBe("can_test");
+    expect(route("docusign").managed.state).toBe("unavailable");
+  });
+
+  it("read and send needs the read approvals, without a second send review", () => {
+    const { g, s } = sel("gmail", "t.uses=read_send&t.audience=external");
+    const ids = computePlan(g, s).gates.map((x) => x.id);
+    expect(ids).toEqual(expect.arrayContaining(["restricted", "casa"]));
+    expect(ids).not.toContain("sensitive");
+  });
+
+  it("ticking every step is reported complete, never verified", () => {
+    const g = getGuide("docusign")!;
+    const q = `have=${g.requirements.map((r) => r.id).join(",")}&done=${g.gates.map((x) => x.id).join(",")}`;
+    const v = agentView(g, parseSelection(g, new URLSearchParams(q)));
+    expect(v.decision.ownApp).toMatchObject({ status: "reported_complete", verified: false });
+  });
+});
+
+describe("share links", () => {
+  it("round-trip the selection through the query string", () => {
+    const { g, s } = sel("gmail", "t.uses=read_send&have=privacy_policy,homepage&done=brand&lane=own");
+    const again = parseSelection(g, new URLSearchParams(toSearchParams(s)));
+    expect(again).toEqual(s);
+    expect(toSearchParams(s)).toContain("have=privacy_policy,homepage");
+  });
+
+  it("the schema rejects ids that would break the query string", async () => {
+    const { GuideSchema } = await import("./schema");
+    const g = structuredClone(getGuide("gmail")!);
+    g.toggles[0].options[0].id = "a&b=c";
+    expect(GuideSchema.safeParse(g).success).toBe(false);
   });
 });

@@ -5,6 +5,8 @@ export const RangeSchema = z
   .tuple([Num, Num])
   .refine(([min, max]) => min <= max, { message: "range min must be <= max" });
 const Wait = z.union([RangeSchema, z.literal("unknown")]);
+// ids end up in share links (?t.x=y&have=a,b): no "&", "=", "," or spaces
+const Id = z.string().regex(/^[a-z0-9_]+$/, "id must be lowercase letters, digits or _");
 
 export const EvidenceStatusSchema = z.enum(["tested", "official", "reported", "conflicting", "unknown"]);
 
@@ -31,16 +33,16 @@ export const ClaimSchema = z.object({
 });
 
 export const ToggleSchema = z.object({
-  id: z.string(),
+  id: Id,
   label: z.string(),
-  options: z.array(z.object({ id: z.string(), label: z.string() })),
+  options: z.array(z.object({ id: Id, label: z.string() })),
   default: z.string(),
 });
 
 const AppliesWhen = z.record(z.string(), z.array(z.string())).optional();
 
 export const GateSchema = z.object({
-  id: z.string(),
+  id: Id,
   title: z.string(),
   appliesWhen: AppliesWhen,
   phase: z.enum(["dev", "production"]),
@@ -59,7 +61,7 @@ export const GateSchema = z.object({
 });
 
 export const RequirementSchema = z.object({
-  id: z.string(),
+  id: Id,
   label: z.string(),
   appliesWhen: AppliesWhen,
   howToGet: z.array(z.string()),
@@ -85,7 +87,10 @@ export const GuideSchema = z.object({
     managed: z.union([z.boolean(), z.literal("unknown")]),
     guideUrl: z.string().optional(),
     // the managed answer depends on what the agent does; first matching note wins
-    notes: z.array(z.object({ when: z.record(z.string(), z.array(z.string())), text: z.string() })).optional(),
+    // scope "unconfirmed": Composio's app works, but whether it covers the scopes this use needs is not stated
+    notes: z
+      .array(z.object({ when: z.record(z.string(), z.array(z.string())), text: z.string(), scope: z.enum(["confirmed", "unconfirmed"]).optional() }))
+      .optional(),
   }),
   toggles: z.array(ToggleSchema),
   gates: z.array(GateSchema),

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { githubManifest, slackManifestUrl, type Kit } from "@/lib/kits";
+import { githubAppUrl, slackManifestUrl, type Kit } from "@/lib/kits";
 import { decodeError } from "@/lib/errors";
+import { safeHref } from "@/lib/display";
 
 function CopyBlock({ label, text, note }: { label: string; text: string; note?: string }) {
   const [copied, setCopied] = useState(false);
@@ -51,14 +52,9 @@ function SlackKit() {
 function GithubKit() {
   const [name, setName] = useState("");
   const [homepage, setHomepage] = useState("");
+  const ok = name.trim() && safeHref(homepage);
   return (
-    <form
-      action="https://github.com/settings/apps/new"
-      method="post"
-      target="_blank"
-      // built at submit time: the return URL needs this site's origin, which the server render doesn't know
-      onSubmit={(e) => ((e.currentTarget.elements.namedItem("manifest") as HTMLInputElement).value = githubManifest(name, homepage, `${location.origin}/g/github?done=create_app`))}
-      className="rounded-md border border-emerald-200 bg-emerald-50/50 p-3 text-sm">
+    <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-3 text-sm">
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="block text-zinc-800">
           App name
@@ -69,14 +65,17 @@ function GithubKit() {
           <input type="url" required value={homepage} onChange={(e) => setHomepage(e.target.value)} placeholder="https://yourapp.com" className={input} />
         </label>
       </div>
-      <input type="hidden" name="manifest" defaultValue="" />
-      <button type="submit" className={`mt-2 ${primary}`}>
-        Create the GitHub App, pre-filled →
-      </button>
+      {ok ? (
+        <a href={githubAppUrl(name, homepage)} target="_blank" rel="noopener noreferrer" className={`mt-2 inline-block ${primary}`}>
+          Create the GitHub App, pre-filled →
+        </a>
+      ) : (
+        <p className="mt-2 text-xs text-zinc-600">Enter a name and an https homepage to get the pre-filled link.</p>
+      )}
       <p className="mt-2 text-xs text-zinc-600">
-        GitHub opens with the Composio callback and read-only metadata access; add the permissions your tools need there, then click Create. It sends you back here with this step marked done. We never receive your keys.
+        GitHub opens with the Composio callback and read-only metadata access; add the permissions your tools need there, then click Create. Nothing comes back to this site: tick the step done yourself once the app exists.
       </p>
-    </form>
+    </div>
   );
 }
 
@@ -85,7 +84,7 @@ export function KitList({ kits }: { kits: Kit[] }) {
   return (
     <div className="mt-3 space-y-2">
       {kits.map((k, i) =>
-        k.kind === "slack-manifest" ? <SlackKit key={i} /> : k.kind === "github-manifest" ? <GithubKit key={i} /> : <CopyBlock key={i} {...k} />,
+        k.kind === "slack-manifest" ? <SlackKit key={i} /> : k.kind === "github-prefill" ? <GithubKit key={i} /> : <CopyBlock key={i} {...k} />,
       )}
     </div>
   );

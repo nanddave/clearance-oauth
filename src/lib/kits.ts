@@ -5,7 +5,7 @@ export const COMPOSIO_REDIRECT = "https://backend.composio.dev/api/v3/toolkits/a
 
 export type Kit =
   | { kind: "slack-manifest" }
-  | { kind: "github-manifest" }
+  | { kind: "github-prefill" }
   | { kind: "copy"; label: string; text: string; note?: string };
 
 /** Slack's documented pre-fill link: opens app creation with the bot scopes and the Composio redirect already set. */
@@ -20,16 +20,17 @@ export function slackManifestUrl(appName: string, scopes = "chat:write"): string
   return `https://api.slack.com/apps?new_app=1&manifest_json=${encodeURIComponent(JSON.stringify(manifest))}`;
 }
 
-/** GitHub App manifest. GitHub sends the browser back to `returnUrl` with a code we never exchange, so no secret reaches us. */
-export function githubManifest(appName: string, homepage: string, returnUrl: string): string {
-  return JSON.stringify({
+/** GitHub's documented URL-parameter prefill: nothing returns to this site (the manifest flow sent back an exchangeable code). */
+export function githubAppUrl(appName: string, homepage: string): string {
+  const q = new URLSearchParams({
     name: appName.trim().slice(0, 34) || "My agent",
     url: homepage,
-    redirect_url: returnUrl,
-    callback_urls: [COMPOSIO_REDIRECT],
-    public: false,
-    default_permissions: { metadata: "read" }, // the minimum; add what your tools need on GitHub's page before creating
+    "callback_urls[]": COMPOSIO_REDIRECT,
+    public: "false",
+    webhook_active: "false",
+    metadata: "read", // the minimum; add what your tools need on GitHub's page before creating
   });
+  return `https://github.com/settings/apps/new?${q}`;
 }
 
 // A read-only tool to prove the connection works. Names we're fairly sure of; otherwise the developer picks one.
@@ -159,7 +160,7 @@ export function kitsFor(guide: Guide, id: string): Kit[] {
     ];
   const kits = [...(COPY[`${guide.slug}:${id}`] ?? [])];
   if (guide.slug === "slack" && id === "create_app") kits.unshift({ kind: "slack-manifest" });
-  if (guide.slug === "github" && id === "create_app") kits.unshift({ kind: "github-manifest" });
+  if (guide.slug === "github" && id === "create_app") kits.unshift({ kind: "github-prefill" });
   const setupGate = SETUP_GATE[guide.slug] ?? guide.gates.find((g) => g.phase === "dev")?.id;
   if (id === setupGate)
     kits.push({

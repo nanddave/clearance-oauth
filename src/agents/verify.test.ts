@@ -48,6 +48,14 @@ describe("verify", () => {
     const { guide } = verify(structuredClone(getGuide("gmail")!), new Map(), []);
     expect(guide.requirements.every((r) => r.check.kind === "self")).toBe(true);
   });
+
+  it("matches a straight-quoted quote against a page with curly quotes, dashes and nbsp", () => {
+    const g = base();
+    g.claims[0].sources[0].quote = `the app's "Go-Live" review - 48 hours`;
+    const page = new Map([["https://developers.docusign.com/go-live", "Then the app’s “Go–Live” review — 48 hours."]]);
+    const { guide } = verify(g, page, ["developers.docusign.com"]);
+    expect(guide.claims[0].sources[0].verbatim).toBe(true);
+  });
 });
 
 describe("isOfficial", () => {

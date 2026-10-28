@@ -18,10 +18,12 @@
       {
         "when": {
           "uses": [
-            "read"
+            "read",
+            "read_send"
           ]
         },
-        "text": "Composio's shared app lets you start today, and managed auth configs accept scope overrides. Whether its Google verification covers the read scopes you need is not stated in Composio's docs — confirm before launch. Your own app needs restricted-scope verification below."
+        "text": "Composio's shared app lets you start today, and managed auth configs accept scope overrides. Whether its Google verification covers the read scopes you need is not stated in Composio's docs — confirm before launch. Your own app needs restricted-scope verification below.",
+        "scope": "unconfirmed"
       },
       {
         "when": {
@@ -46,6 +48,10 @@
         {
           "id": "read",
           "label": "Read (inbox, messages)"
+        },
+        {
+          "id": "read_send",
+          "label": "Read and send"
         }
       ],
       "default": "read"
@@ -213,7 +219,8 @@
           "external"
         ],
         "uses": [
-          "read"
+          "read",
+          "read_send"
         ]
       },
       "nextStep": "In Verification Center, submit the restricted-scope justification and demo video; start the CASA assessment in parallel."
@@ -247,7 +254,8 @@
           "external"
         ],
         "uses": [
-          "read"
+          "read",
+          "read_send"
         ]
       },
       "startDay1": true,
@@ -335,7 +343,8 @@
       "claimIds": [],
       "appliesWhen": {
         "uses": [
-          "read"
+          "read",
+          "read_send"
         ],
         "audience": [
           "external"
@@ -390,7 +399,8 @@
       ],
       "appliesWhen": {
         "uses": [
-          "read"
+          "read",
+          "read_send"
         ],
         "audience": [
           "external"

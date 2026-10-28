@@ -14,9 +14,9 @@ export function NextActionCard({ action, kits, onDone }: { action: NextAction | 
     return (
       <section aria-labelledby="next" className="mt-4 rounded-xl border-2 border-emerald-700 bg-emerald-50 p-5">
         <h2 id="next" className="text-lg font-semibold text-emerald-950">
-          Every step is done
+          Setup reported complete · connection unverified
         </h2>
-        <p className="mt-1 text-sm text-emerald-900">Every step in this plan is done, including any provider review. Run the Composio setup script once to confirm a real user can connect.</p>
+        <p className="mt-1 text-sm text-emerald-900">You&apos;ve ticked every step in this plan; we haven&apos;t checked any of them. Run the Composio setup script once to confirm a real user can connect and a tool works.</p>
       </section>
     );
   const who = WHO[action.who];
