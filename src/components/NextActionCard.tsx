@@ -55,7 +55,7 @@ export function NextActionCard({ action, kits, onDone, own }: { action: NextActi
       )}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {onDone && (
-          <button type="button" onClick={onDone} className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700">
+          <button type="button" onClick={onDone} className="min-h-10 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700">
             {action.kind === "gate" ? "Mark done" : "I have this"}
           </button>
         )}

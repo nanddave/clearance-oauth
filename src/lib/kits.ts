@@ -35,6 +35,8 @@ export function githubAppUrl(appName: string, homepage: string): string {
 
 // A read-only tool to prove the connection works. Names we're fairly sure of; otherwise the developer picks one.
 const TEST_TOOL: Record<string, string> = { gmail: "GMAIL_GET_PROFILE", github: "GITHUB_GET_THE_AUTHENTICATED_USER" };
+// when the default tool needs more than some uses grant
+const TOOL_CAVEAT: Record<string, string> = { gmail: "It needs a read scope: with gmail.send only, set TEST_TOOL to a send tool and email yourself." };
 
 function connectAndCheck(guide: Guide, connect = `composio.connectedAccounts.link("test-user", authConfig.id)`): string {
   const tool = TEST_TOOL[guide.slug];
@@ -53,7 +55,7 @@ console.log("Connection:", account.status); // ACTIVE = this user can connect
 console.log("Tool check:", result.successful ? "OK" : \`failed: \${result.error}\`); // prints no account data
 `;
   return tool
-    ? base + `// ${tool} is our best guess; check the exact name in Composio's ${guide.name} tool list.\n` + run(`process.env.TEST_TOOL ?? "${tool}"`)
+    ? base + `// ${tool} is our best guess; check the exact name in Composio's ${guide.name} tool list.${TOOL_CAVEAT[guide.slug] ? ` ${TOOL_CAVEAT[guide.slug]}` : ""}\n` + run(`process.env.TEST_TOOL ?? "${tool}"`)
     : base +
         `// We don't know a safe read-only ${guide.name} tool: set TEST_TOOL to a GET or LIST tool from Composio's tool list.
 if (process.env.TEST_TOOL) {
@@ -131,7 +133,7 @@ const COPY: Record<string, Kit[]> = {
       kind: "copy",
       label: "Justification for read scopes",
       text: "[Your app] lets a user's AI assistant read and summarise the emails the user asks about. We request [scope] because [the narrower scope cannot do X]. Message content is processed only to answer the user's request and is not used for advertising or to train models.",
-      note: "Google rejects vague answers: name the exact feature, and why a narrower scope is not enough.",
+      note: "Google rejects vague answers: name the exact feature, and why a narrower scope is not enough. If your agent also sends mail, add one sentence for gmail.send: what it sends, and only when the user asks.",
     },
   ],
   "gusto:preapproval": [

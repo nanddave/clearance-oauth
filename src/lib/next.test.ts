@@ -119,6 +119,8 @@ describe("routeStatus", () => {
     expect(route("gmail", "t.uses=read_send&t.audience=external").managed.state).toBe("scope_unconfirmed");
     expect(route("gmail", "t.uses=send&t.audience=external").managed.state).toBe("can_test");
     expect(route("docusign").managed.state).toBe("unavailable");
+    expect(route("gmail", "t.uses=read&t.audience=internal").managed.state).toBe("scope_unconfirmed");
+    expect(route("gmail", "t.uses=send&t.audience=internal").managed.state).toBe("can_test");
   });
 
   it("read and send needs the read approvals, without a second send review", () => {

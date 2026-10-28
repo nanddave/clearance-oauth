@@ -3,7 +3,10 @@ import type { AgentEvent, AgentImpls } from "../agents/types";
 import { kvDel, kvGet, kvSet, kvSetNx } from "./kv";
 import type { Guide } from "./schema";
 
-export type Job = { status: "running" | "done" | "failed"; events: AgentEvent[]; guide?: Guide; query?: string; startedAt?: number };
+export type Job = { status: "running" | "done" | "failed"; events: AgentEvent[]; guide?: Guide; query?: string; startedAt?: number; pipeline?: number };
+
+/** Bump when research changes enough that older guides should be redone (3: Composio facts set by code only). */
+export const PIPELINE = 3;
 
 const LOG_TTL = 7 * 86400; // run logs are kept a week
 const GUIDE_TTL = 180 * 86400; // finished guides are kept so share links keep working
@@ -23,11 +26,11 @@ export const getSavedGuide = async (slug: string) => (await kvGet<Job>(`guide:${
 
 const REFRESH_MS = 30 * 86400_000; // research older than this is redone on the next request; the old link keeps working until then
 
-/** A running job or a recent guide is reused; a failed, guide-less or month-old job is replaced on request. */
+/** A running job or a recent guide from this pipeline is reused; a failed, guide-less, month-old or older-pipeline job is replaced on request. */
 export const isReusable = (job: Job | undefined): job is Job =>
   !!job &&
   (job.status === "running" ||
-    (job.status === "done" && !!job.guide && Date.now() - Date.parse(job.guide.updatedAt) < REFRESH_MS));
+    (job.status === "done" && !!job.guide && job.pipeline === PIPELINE && Date.now() - Date.parse(job.guide.updatedAt) < REFRESH_MS));
 
 /** Only one research run per app at a time, across instances. */
 export const claimRun = (slug: string) => kvSetNx(`lease:${slug}`, 1, Math.ceil(STALE_MS / 1000));
@@ -39,7 +42,7 @@ export const releaseRun = (slug: string) => kvDel(`lease:${slug}`);
  * Every event re-saves the job so a poll from another instance sees progress; writes are chained to keep order.
  */
 export async function startJob(slug: string, query: string, deps?: AgentImpls): Promise<() => Promise<void>> {
-  const job: Job = { status: "running", events: [], query, startedAt: Date.now() };
+  const job: Job = { status: "running", events: [], query, startedAt: Date.now(), pipeline: PIPELINE };
   let saving = kvSet(key(slug), job, LOG_TTL);
   await saving;
   const save = () =>

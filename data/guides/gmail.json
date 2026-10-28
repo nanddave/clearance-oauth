@@ -11,6 +11,19 @@
         "when": {
           "audience": [
             "internal"
+          ],
+          "uses": [
+            "read",
+            "read_send"
+          ]
+        },
+        "text": "Composio's shared app lets your own Workspace users connect today, but whether its Google verification covers the read scopes you need is not stated in Composio's docs: confirm before relying on it. An internal app of your own needs no Google verification.",
+        "scope": "unconfirmed"
+      },
+      {
+        "when": {
+          "audience": [
+            "internal"
           ]
         },
         "text": "Composio's shared Google app works for your own Workspace users; an internal app of your own needs no Google verification either."
@@ -22,7 +35,7 @@
             "read_send"
           ]
         },
-        "text": "Composio's shared app lets you start today, and managed auth configs accept scope overrides. Whether its Google verification covers the read scopes you need is not stated in Composio's docs — confirm before launch. Your own app needs restricted-scope verification below.",
+        "text": "Composio's shared app lets you start today, and managed auth configs accept scope overrides. Whether its Google verification covers the read scopes you need is not stated in Composio's docs \u2014 confirm before launch. Your own app needs restricted-scope verification below.",
         "scope": "unconfirmed"
       },
       {
@@ -100,7 +113,7 @@
         "g_cap",
         "g_exempt"
       ],
-      "nextStep": "In Google Cloud console: create a project, enable the Gmail API, fill in Google Auth Platform → Branding, then create an OAuth client (Web application) with the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback. Add yourself as a test user."
+      "nextStep": "In Google Cloud console: create a project, enable the Gmail API, fill in Google Auth Platform \u2192 Branding, then create an OAuth client (Web application) with the redirect URI https://backend.composio.dev/api/v3/toolkits/auth/callback. Add yourself as a test user."
     },
     {
       "id": "brand",
@@ -136,7 +149,7 @@
           "external"
         ]
       },
-      "nextStep": "In Google Auth Platform → Verification Center, submit for verification once branding, homepage and privacy policy are live.",
+      "nextStep": "In Google Auth Platform \u2192 Verification Center, submit for verification once branding, homepage and privacy policy are live.",
       "whatToAsk": "Ask Google's verification team, in your verification email thread: \"What is the current brand verification turnaround for my project?\""
     },
     {
@@ -447,7 +460,7 @@
     },
     {
       "id": "g_brand",
-      "text": "Reported 2–3 business days; source not captured.",
+      "text": "Reported 2\u20133 business days; source not captured.",
       "status": "unknown",
       "sources": [],
       "note": "The research agent tagged this official but did not record which Google page."
@@ -463,7 +476,7 @@
           "checkedAt": "2026-10-27"
         }
       ],
-      "note": "Another Google page reportedly says 3–5 business days (URL not captured)."
+      "note": "Another Google page reportedly says 3\u20135 business days (URL not captured)."
     },
     {
       "id": "g_restricted",
@@ -472,7 +485,7 @@
       "sources": [
         {
           "url": "https://support.google.com/cloud/answer/7454865",
-          "quote": "Restricted ≈6 weeks",
+          "quote": "Restricted \u22486 weeks",
           "checkedAt": "2026-10-27"
         },
         {
