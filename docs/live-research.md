@@ -4,11 +4,11 @@ Clearance researches apps outside its reviewed library on request. These guides 
 
 | App | Time | Cost | What the agents found |
 |---|---|---|---|
-| [Notion](https://clearance-oauth.vercel.app/g/notion) | 75 s | $0.46 | The Authorization URL appears only after the public connection is submitted for review, with no published timeline; a Marketplace listing is a separate, optional review. |
-| [Calendly](https://clearance-oauth.vercel.app/g/calendly) | 110 s | $0.55 | Self-serve: no source shows a review. Production redirects must use HTTPS, and the client secret is shown only once. |
-| [HubSpot](https://clearance-oauth.vercel.app/g/hubspot) | 127 s | $0.80 | Self-serve for your own accounts; optional certification takes about 10 business days to a first reply, up to 60 days of review, and 60 active installs. |
+| [Notion](https://clearance-oauth.vercel.app/g/notion) | 191 s | $0.55 | Self-serve without a listing: create a public connection and use its client ID and secret. A Marketplace listing adds a security review and a listing review (5–10 business days). |
+| [Calendly](https://clearance-oauth.vercel.app/g/calendly) | 65 s | $0.36 | Self-serve: no source shows a review. Production redirects must use HTTPS, and the client secret is shown only once. |
+| [HubSpot](https://clearance-oauth.vercel.app/g/hubspot) | 131 s | $0.81 | Self-serve for an unlisted app a Super Admin installs. A Marketplace listing needs three active installs, a first review within 10 business days and up to 60 days of feedback. |
 
-Every wait in these guides either cites a word-for-word quote from the provider's own documentation or says "unknown".
+All 37 claims across the three guides are backed by a word-for-word quote from the provider's own documentation.
 
 ## Limits
 - A guide shows whether Composio manages the app's OAuth only when Composio's toolkit lookup succeeds; otherwise it says coverage is unknown.
