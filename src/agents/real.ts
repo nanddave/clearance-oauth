@@ -86,10 +86,14 @@ export function makeRealAgents(): AgentImpls {
       }
       const misses: { s: string; status?: number; why: string }[] = [];
       for (const s of new Set([slug.replace(/-/g, ""), slug])) {
-        const res = await fetch(`https://backend.composio.dev/api/v3.1/toolkits/${encodeURIComponent(s)}`, {
-          headers: { "x-api-key": key },
-          signal: AbortSignal.timeout(8000),
-        }).catch((e: unknown) => (e instanceof Error ? e.message : String(e)));
+        const get = (header: string) =>
+          fetch(`https://backend.composio.dev/api/v3.1/toolkits/${encodeURIComponent(s)}`, {
+            headers: { [header]: key },
+            signal: AbortSignal.timeout(8000),
+          }).catch((e: unknown) => (e instanceof Error ? e.message : String(e)));
+        // the endpoint takes a project key in x-api-key or a user key in x-user-api-key; try the other on a 401
+        let res = await get("x-api-key");
+        if (typeof res !== "string" && res.status === 401) res = await get("x-user-api-key");
         if (typeof res === "string") {
           misses.push({ s, why: res });
           continue;

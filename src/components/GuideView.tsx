@@ -30,7 +30,8 @@ export function GuideView({ guide, query, refresh }: { guide: Guide; query: stri
   const [sel, setSel] = useState<Selection>(() => parseSelection(guide, new URLSearchParams(query)));
   const dirty = useRef(false);
   const update = (fn: (s: Selection) => Selection) => { dirty.current = true; setSel(fn); };
-  useEffect(() => { if (dirty.current) router.replace(pathname + toSearchParams(sel), { scroll: false }); }, [sel, pathname, router]);
+  // native replaceState updates the share link at once; router.replace waited 1-3 s for a server render the page doesn't need
+  useEffect(() => { if (dirty.current) window.history.replaceState(null, "", pathname + toSearchParams(sel)); }, [sel, pathname]);
 
   const setHave = (ids: string[], on: boolean) => update((s) => {
     const have = new Set(s.have);

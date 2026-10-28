@@ -52,7 +52,7 @@ flowchart TB
     CHK["/api/check<br/>site readiness, private addresses blocked"]
     ENG["Plan engine<br/>route status, longest wait, next action"]
   end
-  subgraph Research["Live research (about 90 s, about $0.50)"]
+  subgraph Research["Live research, about 90 s"]
     R["Resolver · code<br/>Composio toolkit lookup"]
     S["Scout · Haiku<br/>provider's own docs hosts"]
     RA["Researcher A · Sonnet<br/>setup and scopes"]
