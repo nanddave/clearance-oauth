@@ -6,7 +6,7 @@
 
 Clearance should be presented as an honest OAuth launch navigator, not as a service that has already connected a user's account. The most convincing demonstration is a reviewer choosing a use case, seeing how that changes the route and launch plan, inspecting the cited evidence, and getting one actionable next step. The live experience now matches this claim, and the production research path has been checked after the Composio Platform key update.
 
-The near-term investment is reliability and proof, not more provider pages. A working managed-route lookup and one real account/tool test would improve the product more than another unverified feature. No external judging rubric is available, so a promised change of 10 or 12 points cannot be calculated.
+The near-term investment is reliability and proof, not more provider pages. A working managed-route lookup and one real account/tool test would improve the product more than another unverified feature.
 
 ## 2. User and problem
 
@@ -63,7 +63,7 @@ The README must give a five-minute route through Gmail, a simpler app, a gated a
 | F4 | No invented mandatory review | A review gate needs a direct source that the provider reviews apps; uncertain questions do not create a required gate | Implemented; refreshed Calendly guide has no mandatory review gate |
 | F5 | Actionable next step | Show the action, owner, and what to ask for an unknown wait | Implemented; verify in fresh pilot |
 | F6 | Honest progress and execution state | Ticks remain reported; connection and tool results stay unknown without real execution | Implemented |
-| F7 | Reviewer-ready documentation | README explains the demo, choices, architecture, setup, evidence, and limits; research report preserves findings without internal scoring | Complete |
+| F7 | Reviewer-ready documentation | README explains the demo, choices, architecture, setup, evidence, and limits; research report preserves the live findings | Complete |
 | F8 | Deployment check | Automated tests, lint, build, and HTTP smoke agree with the current JSON contract | Tests, lint, and public HTTP smoke passed; production build checked locally |
 
 ### Quality bar for generated guides
