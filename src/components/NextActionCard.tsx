@@ -40,7 +40,12 @@ export function NextActionCard({ action, kits, onDone }: { action: NextAction | 
           {action.whatToAsk}
         </p>
       )}
-      <KitList kits={kits} />
+      {kits.length > 0 && (
+        <details className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+          <summary className="cursor-pointer text-sm font-medium text-zinc-900">Show prepared setup and commands</summary>
+          <KitList kits={kits} />
+        </details>
+      )}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {onDone && (
           <button type="button" onClick={onDone} className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700">

@@ -3,103 +3,57 @@ import type { Gate, Guide } from "@/lib/schema";
 import { hoursLabel, waitLabel, weakestStatus } from "@/lib/display";
 import { EstimateBadge, NumberSource } from "./EvidenceBadge";
 
-const OWNER: Record<Gate["owner"], string> = { agent: "agent", you: "you", org: "your org", provider: "provider" };
-const AGENT_CAN: Record<Gate["agentCan"], string> = { do: "do it", draft: "draft it", none: "—" };
+const OWNER: Record<Gate["owner"], string> = { agent: "Agent", you: "You", org: "Your team", provider: "Provider" };
+const AGENT_CAN: Record<Gate["agentCan"], string> = { do: "Agent can prepare it", draft: "Agent can draft it", none: "You take over" };
 
 export function Day1Chip() {
-  return <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[11px] font-semibold text-violet-900">start day 1</span>;
+  return <span className="rounded bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-900">Start early</span>;
 }
 
-/** Fastest order: engine order, with long-lead requirements and authored startDay1 gates flagged. */
-export function FastestOrder({ guide, plan }: { guide: Guide; plan: Plan }) {
-  const title = (o: Plan["order"][number]) => {
-    if (o.kind === "gate") return guide.gates.find((g) => g.id === o.id)?.title;
-    const label = guide.requirements.find((r) => r.id === o.id)?.label;
-    return label && `Get: ${label}`;
-  };
+export function PathList({ guide, plan, done, currentId, onDone, renderKits }: { guide: Guide; plan: Plan; done: Set<string>; currentId?: string; onDone: (id: string, on: boolean) => void; renderKits?: (id: string) => React.ReactNode }) {
+  const rank = new Map(plan.order.map((o, i) => [o.kind + o.id, i]));
+  const gates = [...plan.gates].sort((a, b) => (rank.get("gate" + a.id) ?? -1) - (rank.get("gate" + b.id) ?? -1));
+  const titleOf = (id: string) => guide.gates.find((g) => g.id === id)?.title ?? id;
+
   return (
-    <ol className="list-decimal space-y-1.5 pl-6 text-sm text-zinc-800">
-      {plan.order.filter((o) => title(o)).map((o) => {
-        const day1 = o.startDay1 || (o.kind === "gate" && guide.gates.find((g) => g.id === o.id)?.startDay1);
+    <ol className="space-y-3">
+      {gates.map((g, i) => {
+        const complete = done.has(g.id);
+        const current = g.id === currentId;
         return (
-          <li key={o.kind + o.id}>
-            <span className={o.kind === "requirement" ? "text-zinc-700" : ""}>{title(o)}</span> {day1 && <Day1Chip />}
+          <li key={`${g.id}-${current}`} className={`relative rounded-xl border bg-white ${current ? "border-zinc-900 shadow-sm" : "border-zinc-200"}`}>
+            <details open={current || undefined}>
+              <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 p-4 marker:hidden [&::-webkit-details-marker]:hidden">
+                <span aria-hidden="true" className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${complete ? "bg-emerald-700 text-white" : current ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-700"}`}>
+                  {complete ? "✓" : i + 1}
+                </span>
+                <span className="min-w-0 flex-1 text-sm font-semibold text-zinc-950">{g.title}</span>
+                {current && <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-xs font-medium text-white">Now</span>}
+                {complete && <span className="text-xs font-medium text-emerald-800">Reported done</span>}
+                {g.startDay1 && !complete && <Day1Chip />}
+                <span aria-hidden="true" className="text-zinc-400">⌄</span>
+              </summary>
+              <div className="border-t border-zinc-100 px-4 pb-4 pt-3 sm:pl-14">
+                <p className="text-sm leading-6 text-zinc-700">{g.nextStep ?? g.title}</p>
+                <dl className="mt-3 grid gap-2 text-xs text-zinc-700 sm:grid-cols-3">
+                  <div><dt className="text-zinc-500">Owner</dt><dd className="mt-0.5 font-medium text-zinc-900">{OWNER[g.owner]}</dd></div>
+                  <div><dt className="text-zinc-500">Your effort</dt><dd className="mt-0.5 font-medium text-zinc-900">{hoursLabel(g.effortHours)} <EstimateBadge /></dd></div>
+                  <div><dt className="text-zinc-500">Provider wait</dt><dd className="mt-0.5 font-medium text-zinc-900">{waitLabel(g.waitDays)} {g.waitDays !== "unknown" && g.waitDays[1] > 0 && <NumberSource status={weakestStatus(guide, g.claimIds)} />}</dd></div>
+                </dl>
+                <p className="mt-3 text-xs text-zinc-600">{AGENT_CAN[g.agentCan]}</p>
+                {g.whatToAsk && <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-950">Wait unknown · {g.whatToAsk}</p>}
+                {g.dependsOn.length > 0 && <p className="mt-2 text-xs text-zinc-600">After: {g.dependsOn.map(titleOf).join(", ")}</p>}
+                {g.blockers.length > 0 && <ul className="mt-3 space-y-2">{g.blockers.map((b, j) => <li key={j} className="text-xs text-zinc-700"><strong>If:</strong> {b.symptom} <strong>Fix:</strong> {b.fix}</li>)}</ul>}
+                {renderKits?.(g.id) && <details className="mt-3"><summary className="cursor-pointer text-xs font-medium text-zinc-800 underline underline-offset-2">Prepared material for this step</summary>{renderKits(g.id)}</details>}
+                <div className="mt-4 flex flex-wrap items-center gap-4">
+                  <button type="button" onClick={() => onDone(g.id, !complete)} className="min-h-10 rounded-md border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-900 hover:bg-zinc-50">{complete ? "Undo reported completion" : "Mark done"}</button>
+                  {g.claimIds.length > 0 && <span className="text-xs text-zinc-500">Sources: {g.claimIds.map((id, j) => <span key={id}>{j > 0 && ", "}<a href={`#claim-${id}`} className="underline underline-offset-2">{id}</a></span>)}</span>}
+                </div>
+              </div>
+            </details>
           </li>
         );
       })}
-    </ol>
-  );
-}
-
-export function PathList({ guide, plan, renderKits }: { guide: Guide; plan: Plan; renderKits?: (id: string) => React.ReactNode }) {
-  const rank = new Map(plan.order.map((o, i) => [o.kind + o.id, i]));
-  const gates = [...plan.gates].sort((a, b) => (rank.get("gate" + a.id) ?? 0) - (rank.get("gate" + b.id) ?? 0));
-  const titleOf = (id: string) => guide.gates.find((g) => g.id === id)?.title ?? id;
-  return (
-    <ol className="space-y-3">
-      {gates.map((g, i) => (
-        <li key={g.id} className="rounded-lg border border-zinc-200 p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs tabular-nums text-zinc-500">{i + 1}.</span>
-            <h3 className="text-sm font-semibold text-zinc-950">{g.title}</h3>
-            <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] text-zinc-700">{g.phase === "dev" ? "dev" : "production"}</span>
-            {g.startDay1 && <Day1Chip />}
-          </div>
-          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs sm:grid-cols-4">
-            <div>
-              <dt className="text-zinc-500">Owner</dt>
-              <dd className="text-zinc-900">{OWNER[g.owner]}</dd>
-            </div>
-            <div>
-              <dt className="text-zinc-500">Your effort</dt>
-              <dd className="flex flex-wrap items-center gap-1 text-zinc-900">
-                {hoursLabel(g.effortHours)} <EstimateBadge />
-              </dd>
-            </div>
-            <div>
-              <dt className="text-zinc-500">Provider wait</dt>
-              <dd className="flex flex-wrap items-center gap-1 text-zinc-900">
-                {waitLabel(g.waitDays)} {g.waitDays !== "unknown" && g.waitDays[1] > 0 && <NumberSource status={weakestStatus(guide, g.claimIds)} />}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-zinc-500">Agent can</dt>
-              <dd className="text-zinc-900">{AGENT_CAN[g.agentCan]}</dd>
-            </div>
-          </dl>
-          {g.nextStep && <p className="mt-2 text-sm text-zinc-700">{g.nextStep}</p>}
-          {renderKits?.(g.id) && (
-            <details className="mt-2 text-sm">
-              <summary className="cursor-pointer text-xs text-zinc-700 underline underline-offset-2">What we can do or prepare for this step</summary>
-              {renderKits(g.id)}
-            </details>
-          )}
-          {g.whatToAsk && <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-950">Wait unknown — {g.whatToAsk}</p>}
-          {g.dependsOn.length > 0 && <p className="mt-2 text-xs text-zinc-600">After: {g.dependsOn.map(titleOf).join(", ")}</p>}
-          {g.blockers.length > 0 && (
-            <ul className="mt-2 space-y-1 text-xs">
-              {g.blockers.map((b, j) => (
-                <li key={j} className="text-zinc-700">
-                  <span className="font-medium text-zinc-900">If:</span> {b.symptom} <span className="font-medium text-zinc-900">Fix:</span> {b.fix}
-                </li>
-              ))}
-            </ul>
-          )}
-          {g.claimIds.length > 0 && (
-            <p className="mt-2 text-xs text-zinc-500">
-              Evidence:{" "}
-              {g.claimIds.map((c, j) => (
-                <span key={c}>
-                  {j > 0 && ", "}
-                  <a href={`#claim-${c}`} className="underline underline-offset-2">
-                    {c}
-                  </a>
-                </span>
-              ))}
-            </p>
-          )}
-        </li>
-      ))}
     </ol>
   );
 }

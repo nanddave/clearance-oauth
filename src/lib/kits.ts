@@ -36,9 +36,9 @@ export function githubAppUrl(appName: string, homepage: string): string {
 // A read-only tool to prove the connection works. Names we're fairly sure of; otherwise the developer picks one.
 const TEST_TOOL: Record<string, string> = { gmail: "GMAIL_GET_PROFILE", github: "GITHUB_GET_THE_AUTHENTICATED_USER" };
 
-function connectAndCheck(guide: Guide): string {
+function connectAndCheck(guide: Guide, connect = `composio.connectedAccounts.link("test-user", authConfig.id)`): string {
   const tool = TEST_TOOL[guide.slug];
-  const base = `const request = await composio.connectedAccounts.link("test-user", authConfig.id);
+  const base = `const request = await ${connect};
 console.log("Open this link and approve:", request.redirectUrl);
 const account = await request.waitForConnection(120_000);
 console.log("Connection:", account.status); // ACTIVE = this user can connect
@@ -94,13 +94,9 @@ export function managedScript(guide: Guide): string {
 import { Composio } from "@composio/core";
 
 const composio = new Composio();
-const authConfig = await composio.authConfigs.create("${guide.slug}", {
-  type: "use_composio_managed_auth",
-  name: "${guide.name} (Composio app)",
-});
-console.log("Auth config:", authConfig.id);
-
-${connectAndCheck(guide)}`;
+// No OAuth app or auth config to set up: authorize creates a Composio-managed one if you have none.
+// "${guide.slug}" is our name for the toolkit; check Composio's toolkit list if this fails.
+${connectAndCheck(guide, `composio.toolkits.authorize("test-user", "${guide.slug}")`)}`;
 }
 
 // The step after which the developer has a client ID and secret to give Composio.

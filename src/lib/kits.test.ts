@@ -37,7 +37,7 @@ describe("setup scripts", () => {
 
   it("managed lane gets a managed-auth script", () => {
     const [k] = kitsFor(getGuide("gmail")!, "managed_connect");
-    expect(k.kind === "copy" && k.text).toContain('type: "use_composio_managed_auth"');
+    expect(k.kind === "copy" && k.text).toContain('composio.toolkits.authorize("test-user", "gmail")');
     expect(k.kind === "copy" && k.text).toContain("GMAIL_GET_PROFILE");
   });
 

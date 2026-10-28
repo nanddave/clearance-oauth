@@ -70,11 +70,11 @@ export function managedAction(guide: Guide): NextAction {
     title: `Connect a test user with Composio's ${guide.name} app`,
     who: "draft",
     owner: "you",
-    step: `In Composio, create a ${guide.name} auth config with Composio managed auth, connect one test account, and run one read-only tool to prove it works. Users will see Composio's name on the consent screen.`,
+    step: `Connect one test account through Composio's ${guide.name} app, then run one read-only tool to prove it works. No OAuth app or credentials to set up; users see Composio's name on the consent screen.`,
     wait: null,
     whatToAsk: null,
     startDay1: false,
-    then: ["Need your name on the consent screen, your own scopes or rate limits? Switch to “Your own app”."],
+    then: ["Need custom scopes? Create a managed auth config with scope overrides.", "Need your name on the consent screen or your own rate limits? Switch to “Your own app”."],
   };
 }
 
