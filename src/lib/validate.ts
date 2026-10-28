@@ -13,7 +13,23 @@ export function selections(guide: Guide): Selection[] {
  * dependency cycles in any toggle combination. Whether the dependencies themselves are right (installs need
  * the app first) is a data question the reviewed guides answer by hand, with afterGates.
  */
-export function validateGuide(guide: Guide): string[] {
+// a provider review sets the tier, so a question or a "no review needed" cannot create a mandatory gate
+const REVIEW = /\b(reviews?|reviewed|approves?|approved|approval|certif\w*|verification|verified|audits?|assessment|vetted|vetting)\b/i;
+const SPECULATIVE = /\b(whether|if any)\b|^(unknown|unclear)\b|\bno\s+(\w+\s+){0,2}(review|approval|verification|audit|assessment)\s+(is\s+)?(required|needed)\b/i;
+
+/** Review gates no cited claim backs; with `checked`, the claim must also be official with a word-for-word quote. */
+export const unbackedReviews = (guide: Guide, checked = false): string[] =>
+  guide.gates
+    .filter((g) => g.kind === "review")
+    .filter(
+      (g) =>
+        !guide.claims.some(
+          (c) => g.claimIds.includes(c.id) && REVIEW.test(c.text) && !SPECULATIVE.test(c.text) && (!checked || (c.status === "official" && c.sources.some((s) => s.verbatim))),
+        ),
+    )
+    .map((g) => g.id);
+
+export function validateGuide(guide: Guide, checkedEvidence = false): string[] {
   const errors: string[] = [];
   const gates = new Set(guide.gates.map((g) => g.id));
   const reqs = new Set(guide.requirements.map((r) => r.id));
@@ -31,13 +47,8 @@ export function validateGuide(guide: Guide): string[] {
     ref(!(always(w) && /\boptional\b/i.test(name)), `${owner}: "${name}" is optional but always applies; move it behind a toggle whose default option skips it`);
   for (const g of guide.gates) optional(`gate ${g.id}`, g.title, g.appliesWhen);
   for (const r of guide.requirements) optional(`requirement ${r.id}`, r.label, r.appliesWhen);
-  // a provider review sets the tier, so it needs a cited claim that a review exists (Calendly got one from a guess)
-  const REVIEW = /\b(review|approv|certif|verif|audit|assessment|vet)/i;
-  for (const g of guide.gates.filter((g) => g.kind === "review"))
-    ref(
-      guide.claims.some((c) => g.claimIds.includes(c.id) && REVIEW.test(c.text) && !/^unknown/i.test(c.text)),
-      `gate ${g.id}: a review step needs a cited claim that the provider reviews apps; if no source says so, drop the gate and put the question in a requirement's whatToAsk`,
-    );
+  for (const id of unbackedReviews(guide, checkedEvidence))
+    errors.push(`gate ${id}: a review step needs a cited claim that the provider reviews apps; if no source says so, drop the gate and put the question in a requirement's whatToAsk`);
   for (const g of guide.gates) {
     checkWhen(`gate ${g.id}`, g.appliesWhen);
     g.dependsOn.forEach((d) => ref(gates.has(d), `gate ${g.id}: dependsOn ${d} missing`));

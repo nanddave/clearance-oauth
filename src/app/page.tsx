@@ -6,8 +6,8 @@ import { listGuides } from "@/lib/guides";
 import { routeStatus } from "@/lib/next";
 import { parseSelection } from "@/lib/selection";
 
-// shortcut: hand-picked from the live pilot (docs/eval); list stored jobs instead once there are more than a handful
-const RESEARCHED = [["notion", "Notion"], ["calendly", "Calendly"], ["hubspot", "HubSpot"]] as const;
+// shortcut: hand-picked from the live research runs (docs/live-research.md); list stored jobs instead once there are more than a handful
+const RESEARCHED = [["notion", "Notion"], ["hubspot", "HubSpot"]] as const;
 
 export default function Home() {
   const guides = listGuides().map((guide) => {

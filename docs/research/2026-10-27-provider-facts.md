@@ -37,7 +37,7 @@ Labels: **[O]** official page fetched · **[R]** third-party/forum · **[C]** so
 - Preliminary review ≤10 business days; functional ≤10 weeks (new), ≤6 weeks (updates); no expedite; resubmitting during preliminary resets queue. Heavier review for `search:read`, `admin.*`, `identity.*`, legacy scopes. [O] https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide
 - Non-Marketplace commercial apps: `conversations.history`/`.replies` → 1 req/min, limit max 15 (May 29 2025). [O] https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps . [C] whether existing installs are affected. The `conversations.history` method reference page still shows only Tier 3 (50+ per minute). [O] https://docs.slack.dev/reference/methods/conversations.history
 
-- Unlisted distribution: a non-Marketplace app can be installed by any workspace via its own authorization link; Marketplace listing is optional (audit 2026-10-28 citing https://docs.slack.dev/faq/). [O-u, not re-fetched]
+- Unlisted distribution: a non-Marketplace app can be installed by any workspace via its own authorization link; Marketplace listing is optional (checked 2026-10-28, https://docs.slack.dev/faq/). [O-u, not re-fetched]
 
 ## GitHub
 - GitHub Apps recommended over OAuth Apps (fine-grained, 1-hour tokens). No review to create/use outside Marketplace; org owners may need to approve. [O] https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/differences-between-github-apps-and-oauth-apps

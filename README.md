@@ -1,65 +1,73 @@
 # Clearance
 
-**Live:** https://clearance-oauth.vercel.app · **Repo:** https://github.com/nanddave/clearance-oauth
+[Try the live app](https://clearance-oauth.vercel.app) · [View the source](https://github.com/nanddave/clearance-oauth)
 
-Composio's managed OAuth apps let developers test many connections without registering an app. Developers may still need their own provider app for branding, scopes, quota, or a toolkit without managed auth. That introduces provider-specific setup, reviews, security checks, and sometimes paid or partner requirements.
+Clearance helps a developer answer a practical OAuth question: **Can I use Composio's app, or do I need my own?** If they need their own app, it shows the likely launch path, the longest blocker, and the next action. It separates documented provider facts from user-reported progress and things it cannot verify.
 
-Clearance first answers the question most developers actually have: **can I just use Composio's app?** Then, for their own app, it tells them:
-- **How hard it is**: Self-serve, Review, Gated or Blocked.
-- **How long**: when they can build, and when real users can connect.
-- **What blocks them**: the #1 blocker.
-- **Where they are now**, and **the one next step**.
+The app is a decision aid. It does not connect to your Composio account, submit provider applications, or claim a connection works without a real test.
 
-For that step it either **does it**, **prepares it**, or says **only you can**. Every fact carries how we know it.
+## Try it in five minutes
 
-## Review it in five minutes
+1. Open [Gmail](https://clearance-oauth.vercel.app/g/gmail). Choose **Read and send** and **Anyone with a Google account**. Compare Composio's managed route with **Your own app**. The scope choice changes the approval path.
+2. In **Your own app**, open **Journey to launch** and tick a step or requirement. The next action and shareable URL update. A tick means the user reported progress; it is not connection verification.
+3. Compare [GitHub](https://clearance-oauth.vercel.app/g/github) (simpler setup), [Gusto](https://clearance-oauth.vercel.app/g/gusto) (partner gate), and [DocuSign](https://clearance-oauth.vercel.app/g/docusign) (provider review). Open **Sources and evidence** on a guide to inspect its claims.
+4. Open a guide the agents researched live: [Notion](https://clearance-oauth.vercel.app/g/notion), [Calendly](https://clearance-oauth.vercel.app/g/calendly) or [HubSpot](https://clearance-oauth.vercel.app/g/hubspot). Each took about 90 seconds and $0.50, and is labelled agent-generated. Typing another app starts new research, within a daily budget.
+5. Open the [Gmail JSON guide](https://clearance-oauth.vercel.app/api/guides/gmail?t.uses=read_send&t.audience=external&lane=own). Its `decision` distinguishes route availability, reported setup progress, and unknown connection and tool results.
 
-1. Open the [live site](https://clearance-oauth.vercel.app) and choose Gmail. Select **Read and send** and **Anyone with a Google account**. Compare the managed route (test today, scopes unconfirmed) with your own app (restricted review and an unknown security-assessment wait).
-2. Select **Your own app**. The two clocks show when you can test and when your own app may launch. Open a checkpoint in **Journey to launch**, tick a requirement, and watch the next action and share URL update. A tick is labelled as reported progress, never a verified connection.
-3. Try [GitHub](https://clearance-oauth.vercel.app/g/github) for an easier route, [Gusto](https://clearance-oauth.vercel.app/g/gusto) for a partner gate, and [DocuSign](https://clearance-oauth.vercel.app/g/docusign) for provider review. Slack and GitHub include prefilled provider setup; the developer confirms the final creation.
-4. Type an app outside the reviewed library. The agents research it live, show their work, and label the result **agent-generated, not human-reviewed**. This uses the live research budget, so a daily limit may temporarily stop new runs.
-5. Open the [Gmail agent JSON](https://clearance-oauth.vercel.app/api/guides/gmail?t.uses=read_send&t.audience=external&lane=own). Its versioned `decision` distinguishes route availability, reported setup progress, and the still-unknown connection and tool result.
+To try it with a coding agent, point it at that JSON and ask: “Can a real user read and send Gmail now? Which evidence supports the answer, what remains unknown, and what should be tested next?”
 
-**A useful reviewer prompt for an agent:** “Read the JSON guide for Gmail read-and-send with external users. Can a real user perform both actions now? Name the evidence for your answer, what remains unknown, and the next test or provider step. Do not treat user-reported completion as verification.”
+## Choose the path that fits your use case
 
-The guide is a decision aid. It cannot access a reviewer’s Composio account or prove their connection without a local test. The setup commands stay on the developer’s machine; paste a non-secret error into **Connection not working?** for known fixes.
+| Choice | What you can change | Where it appears |
+|---|---|---|
+| App | Pick a reviewed guide or enter another provider | Search on the home page |
+| Intended use and audience | Choose scopes, audience, or distribution when they alter provider requirements | Questions at the top of a guide |
+| OAuth route | Compare Composio's managed app with your own provider app | Route cards on a guide |
+| Your progress | Tick completed steps and requirements; share the resulting URL | Journey to launch and Requirements |
 
-## Accuracy check
+The page shows one next action, its owner, and any prepared material. Provider account creation, payment, consent, and final submission still belong to the developer. Local setup examples use the developer's own environment; do not paste secrets into the site or a shared URL.
 
-**Live pilot (2026-10-28):** three apps outside the library, researched on production. Full write-up: [`docs/eval/2026-10-28-live-pilot.md`](docs/eval/2026-10-28-live-pilot.md).
+```mermaid
+flowchart LR
+  A[App and use case] --> B{OAuth route}
+  B -->|Composio app| C[Connect a test user]
+  B -->|Your own app| D[Provider requirements and launch steps]
+  D --> E[One next action and cited evidence]
+  C --> F[Verify connection and a tool locally]
+  E --> F
+```
 
-| App | Time | Cost | Official claims | Unsupported waits | Next step usable |
-|---|---|---|---|---|---|
-| [Notion](https://clearance-oauth.vercel.app/g/notion) | 103 s | $0.49 | 7 of 7 | none | yes |
-| [Calendly](https://clearance-oauth.vercel.app/g/calendly) | 69 s | $0.38 | 7 of 8 | none | yes |
-| [HubSpot](https://clearance-oauth.vercel.app/g/hubspot) | 83 s | $0.54 | 6 of 6 | none | yes |
+## Run locally
 
-The failure was the Composio route: production's Composio key was rejected, so coverage read "unknown" for all three (a missed managed route, never a false green). Calendly may be over-cautious: it adds an unknown review step that no source confirms. `pnpm score:live <apps>` re-scores stored guides at no cost.
+Requires Node.js and pnpm. Copy the example environment file and fill in only the services you intend to use.
 
-`pnpm eval` regenerates guides with the live agents and scores each one (`src/lib/evalScore.ts`):
-- **False green:** says "Test today" on Composio's app when the reviewed guide says Composio has no app.
-- **Tier match:** same difficulty tier as the human-reviewed guide.
-- **Unsupported waits:** a known, non-zero wait with no word-for-word checked source behind it.
-- **Next step usable:** there is a concrete next step.
-
-It runs three reviewed apps (Xero, Gusto, Slack; DocuSign is left out because the synthesizer sees it as its example) and three it hasn't seen (Notion, Calendly, HubSpot), stops at `--budget` (default $20), and writes `docs/eval/results.md`.
-
-## Setup
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in what you have
+cp .env.example .env.local
 pnpm dev
+```
+
+Open `http://localhost:3000`. In another terminal:
+
+```bash
 pnpm test
-pnpm eval --only notion       # live accuracy check (needs ANTHROPIC_API_KEY); drop --only for all six apps
+pnpm lint
 node scripts/smoke.mjs http://localhost:3000
 ```
 
-- **No `ANTHROPIC_API_KEY`:** stub agents run. They're clearly labelled, and the generated guide shows a placeholder banner.
-- **No `COMPOSIO_API_KEY`:** Composio coverage shows as unknown.
-- **No Upstash:** jobs live in memory, which is fine locally. On Vercel, add the Upstash integration (it sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`), so the instance running research and the one answering polls share state.
+| Setting | Purpose | If omitted |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Live research for unfamiliar apps | Explicitly labelled placeholder guides |
+| `COMPOSIO_API_KEY` | Look up managed OAuth coverage | Coverage remains unknown for new research |
+| `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` | Share research jobs across server instances | In-memory jobs, suitable for local development |
+| `DAILY_BUDGET_USD` | Limit live research spend | Defaults to $10 per day |
 
-Stack: Next.js 16 (App Router), TypeScript, Zod, Vitest, `@anthropic-ai/sdk`, Upstash Redis over REST, Vercel.
+On Vercel, the Upstash integration may supply `KV_REST_API_URL` and `KV_REST_API_TOKEN` instead. Keep `.env.local` private. The checked-in guides and their JSON API work without model keys.
 
-## More
-Key decisions, guardrails and known limitations: [`docs/decisions.md`](docs/decisions.md).
+## How it works
 
+Six guides are reviewed in the repository. For other providers, a resolver checks Composio's toolkit data, research agents read provider documentation, and a verifier checks captured links and quotations. A guide passes structural checks before it is saved. The route and next action are then computed from the chosen use case and reported progress.
+
+Evidence labels mean: **Official** is a matching quotation from fetched provider documentation; **Reported** is weaker evidence; **Unknown** has not been established. A generated guide is not human-reviewed. A green route describes a possible path, not a proven connection for a particular user. To establish that, the developer must authorize a test account and run an appropriate tool with the granted scopes.
+
+More detail: [architecture and limitations](docs/decisions.md), [live research runs](docs/live-research.md), and [provider research](docs/research/2026-10-27-provider-facts.md).

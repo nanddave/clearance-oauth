@@ -81,4 +81,4 @@ Every call is priced. The live log shows the cost of each step and the total, so
   - a Gemini cross-check of key numbers
   - calendar reminders for long waits
 
-Design: `docs/superpowers/specs/2026-10-28-clearance-prd.md` · Research notes: `docs/research/2026-10-27-provider-facts.md`
+Research notes: [`docs/research/2026-10-27-provider-facts.md`](research/2026-10-27-provider-facts.md)

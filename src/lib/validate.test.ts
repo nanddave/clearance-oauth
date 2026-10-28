@@ -38,5 +38,22 @@ describe("validateGuide", () => {
     g.gates.push({ ...g.gates[0], id: "guess_review", title: "Confirm whether the provider reviews apps", kind: "review", waitDays: "unknown", dependsOn: [], requires: [], claimIds: [g.claims.find((c) => !/review|approv|certif|verif|audit|assessment|vet/i.test(c.text))!.id] });
     expect(validateGuide(g).some((e) => e.includes("guess_review"))).toBe(true);
   });
+
+  it("a speculative review claim cannot make review mandatory", () => {
+    const g = docusign();
+    const review = g.gates.find((gate) => gate.kind === "review")!;
+    const claim = g.claims.find((c) => review.claimIds.includes(c.id))!;
+    claim.text = "Calendly may review Production apps; ask whether approval is required.";
+    review.claimIds = [claim.id];
+    expect(validateGuide(g).some((e) => e.includes(`gate ${review.id}: a review step`))).toBe(true);
+  });
+
+  it("a generated review still needs a checked provider quote", () => {
+    const g = docusign();
+    expect(validateGuide(g, true)).toEqual([]);
+    const claim = g.claims.find((c) => c.id === "d_golive")!;
+    claim.sources = claim.sources.map((s) => ({ ...s, verbatim: false }));
+    expect(validateGuide(g, true).some((e) => e.includes("gate go_live: a review step"))).toBe(true);
+  });
 });
 

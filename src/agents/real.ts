@@ -3,7 +3,7 @@ import { getGuide } from "../lib/guides";
 import { addSpend } from "../lib/limits";
 import { safeFetch } from "../lib/readiness/safe-fetch";
 import { GuideSchema, type Guide } from "../lib/schema";
-import { validateGuide } from "../lib/validate";
+import { unbackedReviews, validateGuide } from "../lib/validate";
 import { callClaude, extractJson, type Captured } from "./llm";
 import type { AgentImpls, Finding, Log } from "./types";
 import { isOfficial, verify } from "./verify";
@@ -34,6 +34,7 @@ Rules:
 - Status per claim: "reported", or "conflicting" when findings disagree. Code sets the final status.
 - toggles only when the use (scopes, audience, distribution) changes the gates; else []. At most two, and only when the answer changes which steps apply (e.g. read vs write access).
 - A step the sources call optional or say "may be" required is never an always-required gate: put it behind a toggle whose default option skips it.
+- Never add a review gate just to ask whether review exists. Require a finding that explicitly says the provider reviews or approves this app; otherwise put the uncertainty in whatToAsk on a relevant setup step.
 - A prerequisite the developer already has or cannot buy (e.g. workspace owner rights) gets waitDays [0,0]; "unknown" only for real waits on the provider.
 - Redirect URI: tell the developer to register https://backend.composio.dev/api/v3/toolkits/auth/callback.
 - summary: two sentences, plain words, lead with the longest wait.
@@ -168,8 +169,20 @@ export function makeRealAgents(): AgentImpls {
 
     async verifier(guide, log) {
       const { guide: out, stats } = verify(guide, captured, officialHosts);
+      // a review step whose source didn't check out is dropped, not fatal: the run already cost money
+      const drop = new Set(unbackedReviews(out, true));
+      for (const id of drop) log(`Dropped review step '${id}': no checked provider quote says the provider reviews apps`);
+      const kept: Guide = drop.size
+        ? {
+            ...out,
+            gates: out.gates.filter((g) => !drop.has(g.id)).map((g) => ({ ...g, dependsOn: g.dependsOn.filter((d) => !drop.has(d)) })),
+            requirements: out.requirements.map((r) => ({ ...r, afterGates: r.afterGates?.filter((d) => !drop.has(d)) })),
+          }
+        : out;
+      const errors = validateGuide(kept);
+      if (errors.length) throw new Error(`Guide failed checks after verification: ${errors.slice(0, 3).join("; ")}`);
       log(`Checked ${guide.claims.length} claims against ${captured.size} captured pages: ${stats.official} official, ${stats.reported} reported, ${stats.conflicting} conflicting, ${stats.unknown} unverified; ${stats.verbatim} quotes matched word for word, ${stats.droppedLinks} links dropped`);
-      return out;
+      return kept;
     },
   };
 }
@@ -178,7 +191,8 @@ export function makeRealAgents(): AgentImpls {
 export function authError(body: string, key: string): string {
   const e = (safeJson(body) as { error?: { slug?: unknown; message?: unknown } } | null)?.error;
   const msg = [e?.slug, e?.message].filter((x) => typeof x === "string").join(": ");
-  return msg && !msg.includes(key.slice(0, 6)) ? `rejected the API key (${msg.slice(0, 120)})` : "rejected the API key";
+  const leaks = [...Array(Math.max(0, key.length - 3)).keys()].some((i) => msg.includes(key.slice(i, i + 4))); // no 4-character piece of the key
+  return msg && key.length >= 4 && !leaks ? `rejected the API key (${msg.slice(0, 120)})` : "rejected the API key";
 }
 
 function safeJson(text: string): unknown {
