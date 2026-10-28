@@ -100,6 +100,17 @@ node scripts/smoke.mjs http://localhost:3000
 Stack: Next.js 16 (App Router), TypeScript, Zod, Vitest, `@anthropic-ai/sdk`, Upstash Redis over REST, Vercel.
 
 ## Accuracy check
+
+**Live pilot (2026-10-28):** three apps outside the library, researched on production. Full write-up: [`docs/eval/2026-10-28-live-pilot.md`](docs/eval/2026-10-28-live-pilot.md).
+
+| App | Time | Cost | Official claims | Unsupported waits | Next step usable |
+|---|---|---|---|---|---|
+| [Notion](https://clearance-oauth.vercel.app/g/notion) | 103 s | $0.49 | 7 of 7 | none | yes |
+| [Calendly](https://clearance-oauth.vercel.app/g/calendly) | 69 s | $0.38 | 7 of 8 | none | yes |
+| [HubSpot](https://clearance-oauth.vercel.app/g/hubspot) | 83 s | $0.54 | 6 of 6 | none | yes |
+
+The failure was the Composio route: production's Composio key was rejected, so coverage read "unknown" for all three (a missed managed route, never a false green). Calendly may be over-cautious: it adds an unknown review step that no source confirms. `pnpm score:live <apps>` re-scores stored guides at no cost.
+
 `pnpm eval` regenerates guides with the live agents and scores each one (`src/lib/evalScore.ts`):
 - **False green:** says "Test today" on Composio's app when the reviewed guide says Composio has no app.
 - **Tier match:** same difficulty tier as the human-reviewed guide.

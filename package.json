@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "eval": "tsx scripts/eval.mts"
+    "eval": "tsx scripts/eval.mts",
+    "score:live": "tsx scripts/score-live.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

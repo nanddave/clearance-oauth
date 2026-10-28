@@ -94,7 +94,7 @@ export function makeRealAgents(): AgentImpls {
           continue;
         }
         if (!res.ok) {
-          misses.push({ s, status: res.status, why: res.status === 401 || res.status === 403 ? "rejected the API key" : (await res.text().catch(() => "")).split(key).join("[key]").replace(/\s+/g, " ").slice(0, 120) }); // never echo the key
+          misses.push({ s, status: res.status, why: res.status === 401 || res.status === 403 ? authError(await res.text().catch(() => ""), key) : (await res.text().catch(() => "")).split(key).join("[key]").replace(/\s+/g, " ").slice(0, 120) }); // never echo the key
           continue;
         }
         const t = (await res.json().catch(() => ({}))) as { composio_managed_auth_schemes?: unknown };
@@ -172,6 +172,13 @@ export function makeRealAgents(): AgentImpls {
       return out;
     },
   };
+}
+
+/** Composio's canned auth error ("Auth_Unauthorized: Invalid API key format"): says what's wrong with the key without the raw body. */
+export function authError(body: string, key: string): string {
+  const e = (safeJson(body) as { error?: { slug?: unknown; message?: unknown } } | null)?.error;
+  const msg = [e?.slug, e?.message].filter((x) => typeof x === "string").join(": ");
+  return msg && !msg.includes(key.slice(0, 6)) ? `rejected the API key (${msg.slice(0, 120)})` : "rejected the API key";
 }
 
 function safeJson(text: string): unknown {
