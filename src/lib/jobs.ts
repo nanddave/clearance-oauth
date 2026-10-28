@@ -5,8 +5,8 @@ import type { Guide } from "./schema";
 
 export type Job = { status: "running" | "done" | "failed"; events: AgentEvent[]; guide?: Guide; query?: string; startedAt?: number; pipeline?: number };
 
-/** Bump when research changes enough that older guides should be redone (6: new Composio project key). */
-export const PIPELINE = 6;
+/** Bump when research changes enough that older guides should be redone (7: scout retries an empty reply). */
+export const PIPELINE = 7;
 
 const LOG_TTL = 7 * 86400; // run logs are kept a week
 const GUIDE_TTL = 180 * 86400; // finished guides are kept so share links keep working

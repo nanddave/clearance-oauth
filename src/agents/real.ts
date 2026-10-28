@@ -115,21 +115,24 @@ export function makeRealAgents(): AgentImpls {
     },
 
     async scout(slug, log) {
-      const text = await ask(
-        log,
-        {
-          model: "claude-haiku-5-5",
-          system: 'You name the hostnames a SaaS provider owns for its developer docs, API reference and help center. Reply with JSON only: {"officialHosts":["developer.example.com"]}. Up to 5. Never third-party sites. If unsure, return [].',
-          prompt: `Provider: ${slug}`,
-          maxTokens: 500,
-          effort: "low",
-        },
-        () => "Picked the provider's own docs hosts",
-      );
-      const parsed = ScoutOut.safeParse(safeJson(text));
-      officialHosts = (parsed.success ? parsed.data.officialHosts : [])
-        .map((h) => h.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, ""))
-        .filter((h) => HOST.test(h) && !NOT_OFFICIAL.test(h));
+      // one retry: an empty scout reply silently downgrades every source to "reported" (HubSpot, Oct 28)
+      for (let attempt = 0; attempt < 2 && !officialHosts.length; attempt++) {
+        const text = await ask(
+          log,
+          {
+            model: "claude-haiku-5-5",
+            system: 'You name the hostnames a SaaS provider owns for its developer docs, API reference and help center. Reply with JSON only: {"officialHosts":["developer.example.com"]}. Up to 5. Never third-party sites. If unsure, return [].',
+            prompt: `Provider: ${slug}`,
+            maxTokens: 500,
+            effort: "low",
+          },
+          () => "Picked the provider's own docs hosts",
+        );
+        const parsed = ScoutOut.safeParse(safeJson(text));
+        officialHosts = (parsed.success ? parsed.data.officialHosts : [])
+          .map((h) => h.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, ""))
+          .filter((h) => HOST.test(h) && !NOT_OFFICIAL.test(h));
+      }
       log(officialHosts.length ? `Official hosts: ${officialHosts.join(", ")}` : "No official hosts known; every source will count as reported");
       return { officialHosts };
     },
