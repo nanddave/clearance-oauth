@@ -460,7 +460,7 @@
     },
     {
       "id": "g_brand",
-      "text": "Reported 2\u20133 business days; source not captured.",
+      "text": "Brand verification is reported to take 2\u20133 business days; source not captured.",
       "status": "unknown",
       "sources": [],
       "note": "The research agent tagged this official but did not record which Google page."
@@ -498,7 +498,7 @@
     },
     {
       "id": "g_casa",
-      "text": "CASA is required when restricted data passes a third-party server; empanelled assessor, AL1/AL2, annual full re-test.",
+      "text": "The CASA security assessment is required when restricted data passes a third-party server; empanelled assessor, AL1/AL2, annual full re-test.",
       "status": "official",
       "sources": [
         {

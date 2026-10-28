@@ -31,6 +31,13 @@ export function validateGuide(guide: Guide): string[] {
     ref(!(always(w) && /\boptional\b/i.test(name)), `${owner}: "${name}" is optional but always applies; move it behind a toggle whose default option skips it`);
   for (const g of guide.gates) optional(`gate ${g.id}`, g.title, g.appliesWhen);
   for (const r of guide.requirements) optional(`requirement ${r.id}`, r.label, r.appliesWhen);
+  // a provider review sets the tier, so it needs a cited claim that a review exists (Calendly got one from a guess)
+  const REVIEW = /\b(review|approv|certif|verif|audit|assessment|vet)/i;
+  for (const g of guide.gates.filter((g) => g.kind === "review"))
+    ref(
+      guide.claims.some((c) => g.claimIds.includes(c.id) && REVIEW.test(c.text) && !/^unknown/i.test(c.text)),
+      `gate ${g.id}: a review step needs a cited claim that the provider reviews apps; if no source says so, drop the gate and put the question in a requirement's whatToAsk`,
+    );
   for (const g of guide.gates) {
     checkWhen(`gate ${g.id}`, g.appliesWhen);
     g.dependsOn.forEach((d) => ref(gates.has(d), `gate ${g.id}: dependsOn ${d} missing`));

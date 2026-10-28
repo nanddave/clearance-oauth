@@ -32,4 +32,11 @@ describe("validateGuide", () => {
     g.gates[0].appliesWhen = { [g.toggles[0].id]: [g.toggles[0].options[0].id] };
     expect(validateGuide(g).some((e) => e.includes("optional"))).toBe(false);
   });
+
+  it("a review step needs a cited claim that a review exists", () => {
+    const g = structuredClone(getGuide("calendly") ?? getGuide("xero")!);
+    g.gates.push({ ...g.gates[0], id: "guess_review", title: "Confirm whether the provider reviews apps", kind: "review", waitDays: "unknown", dependsOn: [], requires: [], claimIds: [g.claims.find((c) => !/review|approv|certif|verif|audit|assessment|vet/i.test(c.text))!.id] });
+    expect(validateGuide(g).some((e) => e.includes("guess_review"))).toBe(true);
+  });
 });
+
