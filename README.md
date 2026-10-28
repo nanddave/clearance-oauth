@@ -122,4 +122,4 @@ Six guides are reviewed in the repository. For other providers, a resolver check
 
 Evidence labels mean: **Official** is a matching quotation from fetched provider documentation; **Reported** is weaker evidence; **Unknown** has not been established. A generated guide is not human-reviewed. A green route describes a possible path, not a proven connection for a particular user. To establish that, the developer must authorize a test account and run an appropriate tool with the granted scopes.
 
-More detail: [product requirements](docs/PRD.md), [architecture and limitations](docs/decisions.md), [live research runs](docs/live-research.md), and [provider research](docs/research/2026-10-27-provider-facts.md).
+More detail: [architecture and limitations](docs/decisions.md), [live research runs](docs/live-research.md), and [provider research](docs/research/2026-10-27-provider-facts.md).
