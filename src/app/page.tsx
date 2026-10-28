@@ -7,7 +7,7 @@ import { routeStatus } from "@/lib/next";
 import { parseSelection } from "@/lib/selection";
 
 // shortcut: hand-picked from the live research runs (docs/live-research.md); list stored jobs instead once there are more than a handful
-const RESEARCHED = [["notion", "Notion"], ["hubspot", "HubSpot"]] as const;
+const RESEARCHED = [["notion", "Notion"], ["calendly", "Calendly"], ["hubspot", "HubSpot"]] as const;
 
 export default function Home() {
   const guides = listGuides().map((guide) => {
@@ -61,7 +61,7 @@ export default function Home() {
 
       <section aria-labelledby="researched" className="mt-8">
         <h2 id="researched" className="text-lg font-semibold text-zinc-950">Researched live by the agents</h2>
-        <p className="mt-1 text-sm text-zinc-600">Not in the library: agents researched these on request (about 90 s and $0.50 each). Labelled agent-generated, with every source.</p>
+        <p className="mt-1 text-sm text-zinc-600">Not in the library: agents researched these on request (one to two minutes and under $1 each). Labelled agent-generated, with every source.</p>
         <ul className="mt-3 flex flex-wrap gap-2">
           {RESEARCHED.map(([slug, name]) => (
             <li key={slug}><Link href={`/g/${slug}`} className="inline-block min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50">{name} →</Link></li>

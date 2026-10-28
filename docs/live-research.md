@@ -4,9 +4,9 @@ Clearance researches apps outside its reviewed library on request. These guides 
 
 | App | Time | Cost | What the agents found |
 |---|---|---|---|
-| [Notion](https://clearance-oauth.vercel.app/g/notion) | 103 s | $0.49 | The Authorization URL appears only after the public connection is submitted for review; Marketplace listing is a separate choice. |
-| [Calendly](https://clearance-oauth.vercel.app/g/calendly) | 69 s | $0.38 | Sandbox and Production apps are separate; Production redirects must use HTTPS; the client secret is shown only once. |
-| [HubSpot](https://clearance-oauth.vercel.app/g/hubspot) | 83 s | $0.54 | Your own accounts need only a developer account and an app; Marketplace listing needs three installs and certification needs 60. |
+| [Notion](https://clearance-oauth.vercel.app/g/notion) | 75 s | $0.46 | The Authorization URL appears only after the public connection is submitted for review, with no published timeline; a Marketplace listing is a separate, optional review. |
+| [Calendly](https://clearance-oauth.vercel.app/g/calendly) | 110 s | $0.55 | Self-serve: no source shows a review. Production redirects must use HTTPS, and the client secret is shown only once. |
+| [HubSpot](https://clearance-oauth.vercel.app/g/hubspot) | 127 s | $0.80 | Self-serve for your own accounts; optional certification takes about 10 business days to a first reply, up to 60 days of review, and 60 active installs. |
 
 Every wait in these guides either cites a word-for-word quote from the provider's own documentation or says "unknown".
 

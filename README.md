@@ -11,7 +11,7 @@ The app is a decision aid. It does not connect to your Composio account, submit 
 1. Open [Gmail](https://clearance-oauth.vercel.app/g/gmail). Choose **Read and send** and **Anyone with a Google account**. Compare Composio's managed route with **Your own app**. The scope choice changes the approval path.
 2. In **Your own app**, open **Journey to launch** and tick a step or requirement. The next action and shareable URL update. A tick means the user reported progress; it is not connection verification.
 3. Compare [GitHub](https://clearance-oauth.vercel.app/g/github) (simpler setup), [Gusto](https://clearance-oauth.vercel.app/g/gusto) (partner gate), and [DocuSign](https://clearance-oauth.vercel.app/g/docusign) (provider review). Open **Sources and evidence** on a guide to inspect its claims.
-4. Open a guide the agents researched live: [Notion](https://clearance-oauth.vercel.app/g/notion) or [HubSpot](https://clearance-oauth.vercel.app/g/hubspot). Each took about 90 seconds and $0.50, and is labelled agent-generated. The older [Calendly guide](docs/live-research.md) is withheld from the home-page examples until it is refreshed. Typing another app starts new research, within a daily budget.
+4. Open a guide the agents researched live: [Notion](https://clearance-oauth.vercel.app/g/notion), [Calendly](https://clearance-oauth.vercel.app/g/calendly) or [HubSpot](https://clearance-oauth.vercel.app/g/hubspot). Each took one to two minutes and under $1, and is labelled agent-generated. Typing another app starts new research, within a daily budget.
 5. Open the [Gmail JSON guide](https://clearance-oauth.vercel.app/api/guides/gmail?t.uses=read_send&t.audience=external&lane=own). Its `decision` distinguishes route availability, reported setup progress, and unknown connection and tool results.
 
 To try it with a coding agent, point it at that JSON and ask: “Can a real user read and send Gmail now? Which evidence supports the answer, what remains unknown, and what should be tested next?”
@@ -52,7 +52,7 @@ flowchart TB
     CHK["/api/check<br/>site readiness, private addresses blocked"]
     ENG["Plan engine<br/>route status, longest wait, next action"]
   end
-  subgraph Research["Live research, about 90 s"]
+  subgraph Research["Live research, 1–2 minutes"]
     R["Resolver · code<br/>Composio toolkit lookup"]
     S["Scout · Haiku<br/>provider's own docs hosts"]
     RA["Researcher A · Sonnet<br/>setup and scopes"]
